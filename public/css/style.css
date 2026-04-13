@@ -56,7 +56,7 @@ body.dark-mode .hour-label {
     background: white;
     padding: 40px;
     border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 400px;
     text-align: center;
@@ -136,7 +136,7 @@ body.dark-mode .auth-box {
     padding: 15px 25px;
     border-radius: 15px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .app-header h1 {
@@ -152,7 +152,8 @@ body.dark-mode .auth-box {
     color: #667eea;
 }
 
-.dark-mode-btn, .logout-btn {
+.dark-mode-btn,
+.logout-btn {
     padding: 8px 16px;
     border: none;
     border-radius: 10px;
@@ -203,12 +204,15 @@ body.dark-mode .auth-box {
 }
 
 /* Day View */
-.day-view, .week-view, .month-view, .reminders-section {
+.day-view,
+.week-view,
+.month-view,
+.reminders-section {
     background: white;
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .day-view-container {
@@ -384,6 +388,11 @@ body.dark-mode .month-day:hover {
     text-overflow: ellipsis;
 }
 
+.month-task.past {
+    opacity: 0.5;
+    background: #999;
+}
+
 /* Reminders Section */
 .reminders-header {
     display: flex;
@@ -454,7 +463,8 @@ body.dark-mode .reminders-table td {
     margin-right: 5px;
 }
 
-.delete-btn, .edit-btn {
+.delete-btn,
+.edit-btn {
     padding: 6px 10px;
     margin: 0 3px;
     border: none;
@@ -473,7 +483,8 @@ body.dark-mode .reminders-table td {
     color: white;
 }
 
-.delete-btn i, .edit-btn i {
+.delete-btn i,
+.edit-btn i {
     margin-right: 3px;
 }
 
@@ -492,7 +503,7 @@ body.dark-mode .reminders-table td {
     z-index: 1;
 }
 
-.input-group textarea ~ i {
+.input-group textarea~i {
     top: 20px;
     transform: none;
 }
@@ -534,13 +545,18 @@ body.dark-mode .reminders-table td {
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     animation: fadeIn 0.3s;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .modal-content {
@@ -559,6 +575,7 @@ body.dark-mode .reminders-table td {
         transform: translateY(-50px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -637,7 +654,7 @@ body.dark-mode .modal-content {
     color: white;
     padding: 15px 20px;
     border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
     z-index: 1100;
     animation: slideIn 0.3s;
     max-width: 300px;
@@ -656,6 +673,7 @@ body.dark-mode .modal-content {
         transform: translateX(100px);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -727,80 +745,80 @@ body.dark-mode .modal-content {
     body {
         padding: 10px;
     }
-    
+
     .app-header {
         flex-direction: column;
         gap: 10px;
         text-align: center;
     }
-    
+
     .app-header h1 {
         font-size: 1.2rem;
     }
-    
+
     .date-time-display {
         font-size: 10px;
     }
-    
+
     .view-header h2 {
         font-size: 14px;
     }
-    
+
     .view-header button {
         padding: 5px 10px;
         font-size: 12px;
     }
-    
+
     /* Day View on Mobile */
     .hour-label {
         width: 50px;
         font-size: 10px;
         padding: 5px;
     }
-    
+
     .task-block {
         padding: 4px 6px;
     }
-    
+
     .task-title {
         font-size: 10px;
     }
-    
+
     .task-time {
         font-size: 8px;
     }
-    
+
     .delete-task-btn {
         font-size: 8px;
         padding: 2px 5px;
     }
-    
+
     /* Week View on Mobile - Horizontal Scroll */
     .week-view-container {
         overflow-x: scroll;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     .week-day {
         min-width: 90px;
     }
-    
+
     /* Month View on Mobile */
     .month-day {
         min-height: 55px;
         font-size: 10px;
         padding: 3px;
     }
-    
+
     .month-day-number {
         font-size: 11px;
     }
-    
+
     .month-task {
         font-size: 8px;
         padding: 2px 3px;
     }
-    
+
     /* Reminders Table on Mobile */
     .reminders-table {
         font-size: 10px;
@@ -808,45 +826,45 @@ body.dark-mode .modal-content {
         overflow-x: auto;
         white-space: nowrap;
     }
-    
+
     .reminders-table th,
     .reminders-table td {
         padding: 6px;
         min-width: 70px;
     }
-    
+
     .reminders-header {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .add-btn {
         padding: 6px 12px;
         font-size: 12px;
     }
-    
+
     /* Modals on Mobile */
     .modal-content {
         margin: 15% auto;
         padding: 15px;
         width: 95%;
     }
-    
+
     .modal-content h3 {
         font-size: 16px;
     }
-    
+
     .input-group input,
     .input-group textarea {
         padding: 8px 8px 8px 35px;
         font-size: 12px;
     }
-    
+
     .row {
         flex-direction: column;
         gap: 0;
     }
-    
+
     /* Notifications */
     .notification {
         bottom: 10px;
@@ -862,11 +880,11 @@ body.dark-mode .modal-content {
     .week-day {
         min-width: 75px;
     }
-    
+
     .month-day {
         min-height: 45px;
     }
-    
+
     .auth-box {
         margin: 20px;
         padding: 20px;
@@ -900,6 +918,7 @@ body.dark-mode ::-webkit-scrollbar-track {
 body.dark-mode ::-webkit-scrollbar-thumb {
     background: #764ba2;
 }
+
 /* Date Time Display */
 .date-time-display {
     font-size: 14px;
@@ -910,6 +929,7 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode .date-time-display {
     color: #a0aec0;
 }
+
 .delete-task-btn {
     background: #e74c3c;
     color: white;
@@ -924,6 +944,7 @@ body.dark-mode .date-time-display {
 .delete-task-btn:hover {
     background: #c0392b;
 }
+
 .task-block {
     position: relative;
 }
@@ -969,6 +990,7 @@ body.dark-mode .week-task {
 body.dark-mode .week-task.empty {
     background: #555;
 }
+
 .delete-modal-btn {
     background: #e74c3c;
     color: white;
@@ -983,6 +1005,7 @@ body.dark-mode .week-task.empty {
 .delete-modal-btn:hover {
     background: #c0392b;
 }
+
 /* Modal Delete Button */
 .delete-modal-btn {
     background: #e74c3c;
@@ -997,4 +1020,9 @@ body.dark-mode .week-task.empty {
 
 .delete-modal-btn:hover {
     background: #c0392b;
+}
+
+.past {
+    opacity: 0.6;
+    background-color: #ccc;
 }
