@@ -60,15 +60,40 @@
             </div>
         </div>
 
-        <!-- Day View -->
-        <div class="day-view">
-            <div class="view-header">
-                <button id="prevDay"><i class="fas fa-chevron-left"></i></button>
-                <h2 id="dayTitle"></h2>
-                <button id="nextDay"><i class="fas fa-chevron-right"></i></button>
+        <!-- Daily + Reminders Row -->
+        <div class="daily-reminders-row">
+
+            <!-- Day View -->
+            <div class="day-view">
+                <div class="view-header">
+                    <button id="prevDay"><i class="fas fa-chevron-left"></i></button>
+                    <h2 id="dayTitle"></h2>
+                    <button id="nextDay"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div id="dayView" class="day-view-container"></div>
             </div>
-            <div id="dayView" class="day-view-container"></div>
-        </div>
+
+            <!-- Reminders Table -->
+            <div class="reminders-section">
+                <div class="reminders-header">
+                    <h3><i class="fas fa-bell"></i> Reminders</h3>
+                    <button id="addReminderBtn" class="add-btn"><i class="fas fa-plus"></i> Add Reminder</button>
+                </div>
+                <table id="remindersTable" class="reminders-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-tag"></i> Title</th>
+                            <th><i class="fas fa-calendar-day"></i> Date</th>
+                            <th><i class="fas fa-clock"></i> Time</th>
+                            <th><i class="fas fa-sticky-note"></i> Notes</th>
+                            <th><i class="fas fa-cogs"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+        </div><!-- end daily-reminders-row -->
 
         <!-- Week View -->
         <div class="week-view">
@@ -90,25 +115,6 @@
             <div id="monthView" class="month-view-container"></div>
         </div>
 
-        <!-- Reminders Table -->
-        <div class="reminders-section">
-            <div class="reminders-header">
-                <h3><i class="fas fa-bell"></i> Reminders</h3>
-                <button id="addReminderBtn" class="add-btn"><i class="fas fa-plus"></i> Add Reminder</button>
-            </div>
-            <table id="remindersTable" class="reminders-table">
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-tag"></i> Title</th>
-                        <th><i class="fas fa-calendar-day"></i> Date</th>
-                        <th><i class="fas fa-clock"></i> Time</th>
-                        <th><i class="fas fa-sticky-note"></i> Notes</th>
-                        <th><i class="fas fa-cogs"></i> Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
     </div>
 
     <!-- Task Modal -->
