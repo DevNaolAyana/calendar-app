@@ -50,6 +50,37 @@ function isTaskPast(dateStr, startTime) {
     return taskTime < new Date();
 }
 
+// Helper: Check if a reminder has passed
+function isReminderPast(r) {
+    const t = new Date(`${r.date}T${r.time || '00:00'}:00`);
+    return t < new Date();
+}
+
+// Helper: Format countdown string for a reminder
+function formatReminderCountdown(r) {
+    const now = new Date();
+    const t = new Date(`${r.date}T${r.time || '00:00'}:00`);
+    const diff = t - now;
+    if (diff <= 0) return '<span class="countdown-past"><i class="fas fa-history"></i> Passed</span>';
+    const totalMin  = Math.floor(diff / 60000);
+    const totalHr   = Math.floor(totalMin / 60);
+    const totalDays = Math.floor(totalHr / 24);
+    const months    = Math.floor(totalDays / 30);
+    const icon = '<i class="fas fa-hourglass-half"></i>';
+    if (months >= 1) {
+        const rd = totalDays - months * 30;
+        return `<span class="countdown">${icon} ${months}mo${rd > 0 ? ' ' + rd + 'd' : ''}</span>`;
+    } else if (totalDays >= 1) {
+        const rh = totalHr - totalDays * 24;
+        return `<span class="countdown">${icon} ${totalDays}d${rh > 0 ? ' ' + rh + 'h' : ''}</span>`;
+    } else if (totalHr >= 1) {
+        const rm = totalMin - totalHr * 60;
+        return `<span class="countdown">${icon} ${totalHr}h${rm > 0 ? ' ' + rm + 'm' : ''}</span>`;
+    } else {
+        return `<span class="countdown">${icon} ${totalMin}m</span>`;
+    }
+}
+
 // Update current date and time display
 function updateDateTimeDisplay() {
     const now = new Date();
@@ -284,49 +315,58 @@ async function toggleTaskComplete(taskId, isCompleted) {
 //         });
 //     });
 // }
-// Render Day View (WITHOUT delete button, WITH checkbox, NO 'past' class)
+// Render Day View - Timeline with visual task spanning + overlap detection
 function renderDayView(date) {
     const dateStr = formatDate(date);
     const dayTasks = tasks.filter(t => t.date === dateStr);
     const container = document.getElementById('dayView');
-    document.getElementById('dayTitle').innerText = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('dayTitle').innerText = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    let html = '';
+    const HOUR_HEIGHT = 60; // px per hour
+
+    // Build hour grid background
+    let slotsHtml = '';
     for (let hour = 0; hour < 24; hour++) {
-        let hourLabel = formatTime(`${hour.toString().padStart(2, '0')}:00`);
-        let tasksInHour = dayTasks.filter(t => {
-            let startHour = parseInt(t.startTime.split(':')[0]);
-            return startHour === hour;
-        });
-
-        let tasksHtml = tasksInHour.map(t => `
-            <div class="task-block ${isTaskPast(dateStr, t.startTime) ? 'past' : ''}" onclick="event.stopPropagation(); editTask('${t._id}')">
-                <div class="task-title">
-                    <input type="checkbox" class="task-checkbox" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()">
-                    <span class="${t.completed ? 'completed' : ''}">${escapeHtml(t.title)}</span>
-                </div>
-                <div class="task-time">${formatTime(t.startTime)} - ${formatTime(t.endTime)}</div>
-                <div class="task-time">Duration: ${calculateDuration(t.startTime, t.endTime)}</div>
-            </div>
-        `).join('');
-
-        html += `
-            <div class="hour-slot">
-                <div class="hour-label">${hourLabel}</div>
-                <div class="hour-content" onclick="openAddTaskModal('${dateStr}', '${hour.toString().padStart(2, '0')}:00')">
-                    ${tasksHtml}
-                </div>
-            </div>
-        `;
+        const hourLabel = formatTime(`${hour.toString().padStart(2, '0')}:00`);
+        slotsHtml += `<div class="hour-slot" onclick="openAddTaskModal('${dateStr}', '${hour.toString().padStart(2, '0')}:00')"><div class="hour-label">${hourLabel}</div><div class="hour-content"></div></div>`;
     }
-    container.innerHTML = html;
 
-    // Add event listeners to checkboxes
-    document.querySelectorAll('.task-checkbox').forEach(cb => {
+    // Assign columns to overlapping tasks
+    const sorted = [...dayTasks].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const colEnds = [];
+    const taskCol = new Map();
+    for (const t of sorted) {
+        let placed = false;
+        for (let c = 0; c < colEnds.length; c++) {
+            if (colEnds[c] <= t.startTime) { colEnds[c] = t.endTime; taskCol.set(t._id, c); placed = true; break; }
+        }
+        if (!placed) { taskCol.set(t._id, colEnds.length); colEnds.push(t.endTime); }
+    }
+    const numCols = Math.max(1, colEnds.length);
+
+    // Build task overlay blocks
+    const tasksHtml = sorted.map(t => {
+        const [sh, sm] = t.startTime.split(':').map(Number);
+        const [eh, em] = t.endTime.split(':').map(Number);
+        const startMin = sh * 60 + sm;
+        let endMin = eh * 60 + em;
+        if (endMin <= startMin) endMin += 1440;
+        const top    = startMin * (HOUR_HEIGHT / 60);
+        const height = Math.max((endMin - startMin) * (HOUR_HEIGHT / 60), 28);
+        const col    = taskCol.get(t._id) || 0;
+        const pct    = 100 / numCols;
+        const isPast = isTaskPast(dateStr, t.startTime);
+        const dur    = calculateDuration(t.startTime, t.endTime);
+        return `<div class="task-block-overlay${isPast ? ' past' : ''}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${formatTime(t.startTime)}–${formatTime(t.endTime)}</span></div><span class="task-block-duration">${dur}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
+    }).join('');
+
+    container.innerHTML = `<div class="day-timeline-wrapper">${slotsHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
+
+    // Bind checkbox events
+    container.querySelectorAll('.task-checkbox-right').forEach(cb => {
         cb.addEventListener('change', (e) => {
             e.stopPropagation();
-            const taskId = cb.getAttribute('data-id');
-            toggleTaskComplete(taskId, cb.checked);
+            toggleTaskComplete(cb.getAttribute('data-id'), cb.checked);
         });
     });
 }
@@ -450,18 +490,23 @@ function renderAllViews() {
 // Render Reminders Table
 function renderRemindersTable() {
     const tbody = document.querySelector('#remindersTable tbody');
-    tbody.innerHTML = reminders.map(r => `
-        <tr>
+    tbody.innerHTML = reminders.map(r => {
+        const past = isReminderPast(r);
+        const countdown = formatReminderCountdown(r);
+        const dateDisplay = new Date(r.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return `
+        <tr class="${past ? 'reminder-past' : ''}">
             <td>${escapeHtml(r.title)}</td>
-            <td>${new Date(r.date).toLocaleDateString()}</td>
+            <td><div class="reminder-date-disp">${dateDisplay}</div><div>${countdown}</div></td>
             <td>${formatTime(r.time)}</td>
-            <td>${escapeHtml(r.notes || '')}</td>
-            <td>
-                <button class="edit-btn" onclick="editReminder('${r._id}')"><i class="fas fa-edit"></i> Edit</button>
-                <button class="delete-btn" onclick="deleteReminderById('${r._id}')"><i class="fas fa-trash"></i> Delete</button>
+            <td class="reminder-notes-cell">${escapeHtml(r.notes || '')}</td>
+            <td class="reminder-actions">
+                <button class="edit-btn icon-only" onclick="editReminder('${r._id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                <button class="snooze-btn icon-only" onclick="openSnoozeModal('${r._id}')" title="Snooze"><i class="fas fa-bed"></i></button>
+                <button class="delete-btn icon-only" onclick="deleteReminderById('${r._id}')" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
 }
 
 // Check and Notify Reminders
@@ -498,13 +543,18 @@ function checkAndNotifyReminders() {
 
 function startNotificationChecker() {
     if (notificationCheckInterval) clearInterval(notificationCheckInterval);
-    notificationCheckInterval = setInterval(checkAndNotifyReminders, 60000);
+    notificationCheckInterval = setInterval(() => {
+        checkAndNotifyReminders();
+        renderRemindersTable(); // refresh countdown timers
+    }, 60000);
 }
 
 // Task CRUD
 async function openAddTaskModal(date, startTime) {
     document.getElementById('taskModalTitle').innerText = 'Add Task';
     document.getElementById('taskForm').reset();
+    // Enforce minimum date = today (no tasks in the past)
+    document.getElementById('taskDate').min = formatDate(new Date());
     if (date) document.getElementById('taskDate').value = date;
     if (startTime) document.getElementById('taskStartTime').value = startTime;
     document.getElementById('taskModal').style.display = 'block';
@@ -553,14 +603,36 @@ async function saveTask() {
 
     // Check overlap
     const existingTasks = tasks.filter(t => t.date === taskData.date && t._id !== document.getElementById('taskModal').dataset.editId);
-    const overlap = existingTasks.some(t => {
-        return (taskData.startTime >= t.startTime && taskData.startTime < t.endTime) ||
-            (taskData.endTime > t.startTime && taskData.endTime <= t.endTime) ||
-            (taskData.startTime <= t.startTime && taskData.endTime >= t.endTime);
-    });
+    
+    // Disallow more than 2 tasks overlapping at any given time
+    const overlapping = existingTasks.filter(t => taskData.startTime < t.endTime && taskData.endTime > t.startTime);
+    let makesThree = false;
+    for (let i = 0; i < overlapping.length; i++) {
+        for (let j = i + 1; j < overlapping.length; j++) {
+            let t1 = overlapping[i];
+            let t2 = overlapping[j];
+            if (t1.startTime < t2.endTime && t1.endTime > t2.startTime) {
+                makesThree = true;
+                break;
+            }
+        }
+    }
 
+    if (makesThree) {
+        showNotification('⚠️ Cannot have more than 2 tasks overlapping at the same time!', 'warning');
+        return;
+    }
+
+    const overlap = overlapping.length > 0;
     if (overlap) {
         if (!confirm('⚠️ This task overlaps with another task! Save anyway?')) return;
+    }
+
+    // Block new tasks scheduled in the past
+    const editIdForPastCheck = document.getElementById('taskModal').dataset.editId;
+    if (!editIdForPastCheck && isTaskPast(taskData.date, taskData.startTime)) {
+        showNotification('⚠️ Cannot schedule a task in the past!', 'warning');
+        return;
     }
 
     try {
@@ -600,6 +672,7 @@ async function deleteTaskById(id) {
 // Reminder CRUD
 async function openAddReminderModal() {
     document.getElementById('reminderForm').reset();
+    document.getElementById('reminderDate').min = formatDate(new Date());
     document.getElementById('reminderModal').style.display = 'block';
     delete document.getElementById('reminderModal').dataset.editId;
 }
@@ -623,6 +696,13 @@ async function saveReminder() {
         time: document.getElementById('reminderTime').value,
         notes: document.getElementById('reminderNotes').value
     };
+
+    // Block saving reminders in the past
+    const editId = document.getElementById('reminderModal').dataset.editId;
+    if (!editId && isReminderPast(reminderData)) {
+        showNotification('⚠️ Cannot schedule a reminder in the past!', 'warning');
+        return;
+    }
 
     try {
         const editId = document.getElementById('reminderModal').dataset.editId;
@@ -648,6 +728,46 @@ async function deleteReminderById(id) {
     reminders = await API.getReminders();
     renderRemindersTable();
     showNotification('Reminder deleted', 'success');
+}
+
+// Snooze functionality
+async function openSnoozeModal(id) {
+    document.getElementById('snoozeForm').reset();
+    document.getElementById('snoozeModal').dataset.snoozeId = id;
+    document.getElementById('snoozeModal').style.display = 'block';
+}
+
+async function saveSnooze() {
+    const id = document.getElementById('snoozeModal').dataset.snoozeId;
+    const hours = parseInt(document.getElementById('snoozeHours').value);
+    const reminder = reminders.find(r => r._id === id);
+    if (!reminder) return;
+
+    // Add selected hours to the current time
+    const newTime = new Date();
+    newTime.setHours(newTime.getHours() + hours);
+
+    const reminderData = {
+        title: reminder.title,
+        notes: reminder.notes,
+        date: formatDate(newTime),
+        time: `${String(newTime.getHours()).padStart(2, '0')}:${String(newTime.getMinutes()).padStart(2, '0')}`,
+        isNotifiedAtTime: false,
+        isNotifiedAfter: false,
+        isNotified2Hours: false,
+        isNotified6Hours: false,
+        isNotified3Days: false
+    };
+
+    try {
+        await API.updateReminder(id, reminderData);
+        reminders = await API.getReminders();
+        showNotification(`Reminder snoozed for ${hours} hour(s)!`, 'success');
+        closeModals();
+        renderRemindersTable();
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
 }
 
 // Navigation
@@ -692,6 +812,7 @@ function closeModals() {
     delete document.getElementById('taskModal').dataset.editId;
     delete document.getElementById('taskModal').dataset.isEdit;
     delete document.getElementById('reminderModal').dataset.editId;
+    delete document.getElementById('snoozeModal').dataset.snoozeId;
 }
 
 function showNotification(message, type = 'info') {
@@ -767,6 +888,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('addReminderBtn').addEventListener('click', openAddReminderModal);
     document.getElementById('taskForm').addEventListener('submit', (e) => { e.preventDefault(); saveTask(); });
     document.getElementById('reminderForm').addEventListener('submit', (e) => { e.preventDefault(); saveReminder(); });
+    document.getElementById('snoozeForm').addEventListener('submit', (e) => { e.preventDefault(); saveSnooze(); });
     document.getElementById('deleteFromModalBtn').addEventListener('click', () => {
         const editId = document.getElementById('taskModal').dataset.editId;
         if (editId) {
@@ -821,4 +943,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.deleteReminderById = deleteReminderById;
     window.openAddTaskModal = openAddTaskModal;
     window.toggleTaskComplete = toggleTaskComplete;
+    window.openSnoozeModal = openSnoozeModal;
 });

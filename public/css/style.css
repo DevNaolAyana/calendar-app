@@ -206,18 +206,18 @@ body.dark-mode .auth-box {
 /* Daily + Reminders side-by-side row */
 .daily-reminders-row {
     display: flex;
-    gap: 20px;
+    justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 20px;
 }
 
 .daily-reminders-row .day-view {
-    flex: 0 0 70%;
+    flex: 0 0 50%;
     margin-bottom: 0;
 }
 
 .daily-reminders-row .reminders-section {
-    flex: 0 0 calc(30% - 20px);
+    flex: 0 0 48%;
     margin-bottom: 0;
     overflow-x: auto;
 }
@@ -270,35 +270,75 @@ body.dark-mode .hour-label {
     min-height: 70px;
 }
 
-.task-block {
+/* Day View Timeline Overlay */
+.day-timeline-wrapper {
+    position: relative;
+    min-height: 1440px; /* 24 hours * 60px */
+}
+
+.day-tasks-overlay {
+    position: absolute;
+    top: 0;
+    left: 80px; /* offset by hour-label width */
+    right: 0;
+    height: 100%;
+    pointer-events: none;
+}
+
+.task-block-overlay {
+    position: absolute;
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
-    padding: 8px 12px;
     border-radius: 8px;
-    margin: 4px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 6px;
     cursor: pointer;
-    font-size: 12px;
-    transition: transform 0.2s;
+    overflow: hidden;
+    pointer-events: auto;
+    transition: transform 0.1s, z-index 0.1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 10;
 }
 
-.task-block:hover {
+.task-block-overlay:hover {
     transform: scale(1.02);
+    z-index: 20;
 }
 
-.task-block.past {
+.task-block-overlay.past {
     opacity: 0.5;
     background: linear-gradient(135deg, #999, #666);
 }
 
-.task-title {
-    font-weight: bold;
-    font-size: 13px;
+.task-block-inner {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: none;
 }
 
-.task-time {
+.task-block-title {
+    font-weight: bold;
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.task-block-meta, .task-block-duration {
     font-size: 11px;
     opacity: 0.9;
-    margin-top: 4px;
+    white-space: nowrap;
+}
+
+.task-checkbox-right {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-left: 5px;
 }
 
 /* Week View */
@@ -478,12 +518,21 @@ body.dark-mode .reminders-table td {
     color: white;
 }
 
+.reminder-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
 .reminders-table th i {
     margin-right: 5px;
 }
 
 .delete-btn,
-.edit-btn {
+.edit-btn,
+.snooze-btn {
     padding: 6px 10px;
     margin: 0 3px;
     border: none;
@@ -502,9 +551,65 @@ body.dark-mode .reminders-table td {
     color: white;
 }
 
+.snooze-btn {
+    background: #e67e22;
+    color: white;
+}
+
 .delete-btn i,
-.edit-btn i {
-    margin-right: 3px;
+.edit-btn i,
+.snooze-btn i {
+    margin-right: 5px;
+}
+
+.header-text {
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+.btn-text {
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+.icon-only {
+    padding: 6px;
+    font-size: 14px;
+    border-radius: 5px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.countdown {
+    font-size: 12px;
+    color: #e67e22;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.countdown-past {
+    font-size: 12px;
+    color: #e74c3c;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.reminder-past {
+    opacity: 0.6;
+    background-color: #f9f9f9;
+}
+
+body.dark-mode .reminder-past {
+    background-color: #1a2238;
+}
+
+.reminder-date-disp {
+    font-weight: bold;
 }
 
 /* Input groups with icons */
@@ -1044,4 +1149,16 @@ body.dark-mode .week-task.empty {
 .past {
     opacity: 0.6;
     background-color: #ccc;
+}
+
+@media (max-width: 768px) {
+    .daily-reminders-row {
+        flex-direction: column-reverse;
+    }
+    
+    .daily-reminders-row .day-view,
+    .daily-reminders-row .reminders-section {
+        flex: 0 0 100%;
+        width: 100%;
+    }
 }
