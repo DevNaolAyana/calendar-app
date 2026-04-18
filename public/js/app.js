@@ -403,14 +403,25 @@ function renderDayView(date) {
         const col    = taskCol.get(t._id) || 0;
         const pct    = 100 / numCols;
         const isPast = isTaskPast(dateStr, t.startTime);
-        const dur    = calculateDuration(t.startTime, t.endTime);
         const inlineClass = calcHeight <= 35 ? ' inline-layout' : '';
 
-        let metaHtml = `${formatTime(t.startTime)}–${formatTime(t.endTime)}`;
-        if (t.isOverflowStart) metaHtml = `From yesterday, ends ${formatTime(t.endTime)}`;
-        if (t.isOverflowEnd) metaHtml = `Starts ${formatTime(t.startTime)}, into tomorrow`;
+        // For overflow tasks, show the VISIBLE portion's time range and duration
+        let metaHtml;
+        let durDisplay;
+        if (t.isOverflowStart) {
+            // Spill from yesterday: visible from 12:00 AM to endTime on this day
+            metaHtml = `12:00 AM – ${formatTime(t.renderEnd)} <span style="opacity:0.75;font-size:10px">(↑ from yesterday)</span>`;
+            durDisplay = calculateDuration('00:00', t.renderEnd);
+        } else if (t.isOverflowEnd) {
+            // Spill into tomorrow: visible from startTime to midnight on this day
+            metaHtml = `${formatTime(t.startTime)} – midnight <span style="opacity:0.75;font-size:10px">(↓ cont. tomorrow)</span>`;
+            durDisplay = calculateDuration(t.startTime, '00:00') || calculateDuration(t.startTime, t.endTime);
+        } else {
+            metaHtml = `${formatTime(t.startTime)}–${formatTime(t.endTime)}`;
+            durDisplay = calculateDuration(t.startTime, t.endTime);
+        }
 
-        return `<div class="task-block-overlay${isPast ? ' past' : ''}${inlineClass}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${metaHtml}</span></div><span class="task-block-duration">${dur}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
+        return `<div class="task-block-overlay${isPast ? ' past' : ''}${inlineClass}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${metaHtml}</span></div><span class="task-block-duration">${durDisplay}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
     }).join('');
 
     container.innerHTML = `<div class="day-timeline-wrapper">${slotsHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
@@ -601,7 +612,9 @@ function checkAndNotifyReminders() {
                 const passedMin = Math.abs(diffMinutes);
                 let passedStr = `${passedMin} min`;
                 if (passedMin >= 60) {
-                    passedStr = `${Math.floor(passedMin / 60)} hr ${passedMin % 60} min`;
+                    const hrs = Math.floor(passedMin / 60);
+                    const mins = passedMin % 60;
+                    passedStr = mins > 0 ? `${hrs} hr ${mins} min` : `${hrs} hr`;
                 }
                 const msg = `Reminder: ${r.title} has passed by ${passedStr}`;
                 
@@ -610,18 +623,25 @@ function checkAndNotifyReminders() {
                 notif.dataset.reminderId = r._id;
                 notif.innerHTML = `
                     <i class="fas fa-exclamation-triangle"></i> ${msg}
-                    <span class="close-notif" onclick="
-                        this.parentElement.remove();
-                        fetch('/api/reminders/${r._id}', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ isAcknowledgedPassed: true })
-                        });
-                    ">&times;</span>
+                    <span class="close-notif" onclick="acknowledgePassedReminder('${r._id}', this.parentElement)">&times;</span>
                 `;
                 document.body.appendChild(notif);
             }
         }
+    });
+}
+
+// Acknowledge a passed reminder: update in-memory array + API so it never re-fires
+function acknowledgePassedReminder(id, element) {
+    if (element) element.remove();
+    // Mark in local memory immediately so the next interval check won't re-show it
+    const r = reminders.find(r => r._id === id);
+    if (r) r.isAcknowledgedPassed = true;
+    // Persist to server
+    fetch(`/api/reminders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAcknowledgedPassed: true })
     });
 }
 
@@ -1092,4 +1112,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.openAddTaskModal = openAddTaskModal;
     window.toggleTaskComplete = toggleTaskComplete;
     window.openSnoozeModal = openSnoozeModal;
+    window.acknowledgePassedReminder = acknowledgePassedReminder;
 });
