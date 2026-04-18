@@ -318,7 +318,48 @@ async function toggleTaskComplete(taskId, isCompleted) {
 // Render Day View - Timeline with visual task spanning + overlap detection
 function renderDayView(date) {
     const dateStr = formatDate(date);
-    const dayTasks = tasks.filter(t => t.date === dateStr);
+    const prevDate = new Date(date);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDateStr = formatDate(prevDate);
+
+    // Identify overnight tasks from yesterday that spill into today
+    const yesterdayOvernightTasks = tasks.filter(t => t.date === prevDateStr && t.endTime < t.startTime);
+
+    const dayTasksOriginal = tasks.filter(t => t.date === dateStr);
+    
+    // Create rendering objects for everything that should be visible today
+    const renderingTasks = [];
+    
+    for (const t of yesterdayOvernightTasks) {
+        renderingTasks.push({
+            ...t,
+            renderStart: '00:00',
+            renderEnd: t.endTime,
+            isOverflowEnd: false,
+            isOverflowStart: true
+        });
+    }
+
+    for (const t of dayTasksOriginal) {
+        if (t.endTime < t.startTime) {
+            renderingTasks.push({
+                ...t,
+                renderStart: t.startTime,
+                renderEnd: '24:00',
+                isOverflowEnd: true,
+                isOverflowStart: false
+            });
+        } else {
+            renderingTasks.push({
+                ...t,
+                renderStart: t.startTime,
+                renderEnd: t.endTime,
+                isOverflowEnd: false,
+                isOverflowStart: false
+            });
+        }
+    }
+
     const container = document.getElementById('dayView');
     document.getElementById('dayTitle').innerText = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -332,32 +373,44 @@ function renderDayView(date) {
     }
 
     // Assign columns to overlapping tasks
-    const sorted = [...dayTasks].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const sorted = renderingTasks.sort((a, b) => a.renderStart.localeCompare(b.renderStart));
     const colEnds = [];
     const taskCol = new Map();
     for (const t of sorted) {
         let placed = false;
         for (let c = 0; c < colEnds.length; c++) {
-            if (colEnds[c] <= t.startTime) { colEnds[c] = t.endTime; taskCol.set(t._id, c); placed = true; break; }
+            if (colEnds[c] <= t.renderStart) { colEnds[c] = t.renderEnd; taskCol.set(t._id, c); placed = true; break; }
         }
-        if (!placed) { taskCol.set(t._id, colEnds.length); colEnds.push(t.endTime); }
+        if (!placed) { taskCol.set(t._id, colEnds.length); colEnds.push(t.renderEnd); }
     }
     const numCols = Math.max(1, colEnds.length);
 
     // Build task overlay blocks
     const tasksHtml = sorted.map(t => {
-        const [sh, sm] = t.startTime.split(':').map(Number);
-        const [eh, em] = t.endTime.split(':').map(Number);
-        const startMin = sh * 60 + sm;
-        let endMin = eh * 60 + em;
-        if (endMin <= startMin) endMin += 1440;
+        const [sh, sm] = t.renderStart.split(':').map(Number);
+        const startMin = sh * 60 + (sm || 0);
+        let endMin;
+        if (t.renderEnd === '24:00') {
+            endMin = 1440;
+        } else {
+            const [eh, em] = t.renderEnd.split(':').map(Number);
+            endMin = eh * 60 + em;
+        }
+
         const top    = startMin * (HOUR_HEIGHT / 60);
-        const height = Math.max((endMin - startMin) * (HOUR_HEIGHT / 60), 28);
+        const calcHeight = (endMin - startMin) * (HOUR_HEIGHT / 60);
+        const height = Math.max(calcHeight, 28);
         const col    = taskCol.get(t._id) || 0;
         const pct    = 100 / numCols;
         const isPast = isTaskPast(dateStr, t.startTime);
         const dur    = calculateDuration(t.startTime, t.endTime);
-        return `<div class="task-block-overlay${isPast ? ' past' : ''}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${formatTime(t.startTime)}–${formatTime(t.endTime)}</span></div><span class="task-block-duration">${dur}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
+        const inlineClass = calcHeight <= 35 ? ' inline-layout' : '';
+
+        let metaHtml = `${formatTime(t.startTime)}–${formatTime(t.endTime)}`;
+        if (t.isOverflowStart) metaHtml = `From yesterday, ends ${formatTime(t.endTime)}`;
+        if (t.isOverflowEnd) metaHtml = `Starts ${formatTime(t.startTime)}, into tomorrow`;
+
+        return `<div class="task-block-overlay${isPast ? ' past' : ''}${inlineClass}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${metaHtml}</span></div><span class="task-block-duration">${dur}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
     }).join('');
 
     container.innerHTML = `<div class="day-timeline-wrapper">${slotsHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
@@ -378,7 +431,9 @@ function renderDayView(date) {
 // Render Week View (KEEP delete button)
 function renderWeekView(date) {
     const startOfWeek = new Date(date);
-    startOfWeek.setDate(date.getDate() - date.getDay());
+    const dayIndex = startOfWeek.getDay();
+    const offsetToMonday = dayIndex === 0 ? 6 : dayIndex - 1;
+    startOfWeek.setDate(startOfWeek.getDate() - offsetToMonday);
     const container = document.getElementById('weekView');
 
     let html = '<div class="week-view-container">';
@@ -514,29 +569,58 @@ function checkAndNotifyReminders() {
     const now = new Date();
 
     reminders.forEach(async r => {
-        const reminderDate = new Date(r.date);
-        const daysDiff = Math.floor((reminderDate - now) / (1000 * 60 * 60 * 24));
-        const hoursDiff = Math.floor((reminderDate - now) / (1000 * 60 * 60));
+        const reminderDate = new Date(`${r.date}T${r.time || '00:00'}:00`);
+        const diffMs = reminderDate - now;
+        const diffMinutes = Math.floor(diffMs / 60000);
 
-        if (daysDiff === 3 && !r.isNotified3Days) {
-            showNotification(`Reminder: ${r.title} in 3 days`, 'reminder');
-            await API.updateReminder(r._id, { isNotified3Days: true });
-        }
-        if (hoursDiff === 6 && !r.isNotified6Hours) {
-            showNotification(`Reminder: ${r.title} in 6 hours`, 'reminder');
-            await API.updateReminder(r._id, { isNotified6Hours: true });
-        }
-        if (hoursDiff === 2 && !r.isNotified2Hours) {
-            showNotification(`Reminder: ${r.title} in 2 hours`, 'reminder');
-            await API.updateReminder(r._id, { isNotified2Hours: true });
-        }
-        if (hoursDiff === 0 && !r.isNotifiedAtTime) {
-            showNotification(`Reminder: ${r.title} now!`, 'reminder');
-            await API.updateReminder(r._id, { isNotifiedAtTime: true });
-        }
-        if (hoursDiff < 0 && !r.isNotifiedAfter) {
-            showNotification(`Reminder: ${r.title} has passed`, 'warning');
-            await API.updateReminder(r._id, { isNotifiedAfter: true });
+        if (diffMinutes > 0) {
+            if (diffMinutes <= 360 && diffMinutes > 240 && !r.isNotified6Hours) {
+                showNotification(`Reminder: ${r.title} in 6 hours`, 'reminder');
+                await API.updateReminder(r._id, { isNotified6Hours: true });
+            }
+            if (diffMinutes <= 240 && diffMinutes > 120 && !r.isNotified4Hours) {
+                showNotification(`Reminder: ${r.title} in 4 hours`, 'reminder');
+                await API.updateReminder(r._id, { isNotified4Hours: true });
+            }
+            if (diffMinutes <= 120 && diffMinutes > 60 && !r.isNotified2Hours) {
+                showNotification(`Reminder: ${r.title} in 2 hours`, 'reminder');
+                await API.updateReminder(r._id, { isNotified2Hours: true });
+            }
+            if (diffMinutes <= 60 && diffMinutes > 0 && !r.isNotified1Hour) {
+                showNotification(`Reminder: ${r.title} in 1 hour`, 'reminder');
+                await API.updateReminder(r._id, { isNotified1Hour: true });
+            }
+            if (diffMinutes === 0 && !r.isNotifiedAtTime) {
+                showNotification(`Reminder: ${r.title} now!`, 'warning', true, async () => {
+                    await API.updateReminder(r._id, { isAcknowledgedPassed: true });
+                });
+                await API.updateReminder(r._id, { isNotifiedAtTime: true });
+            }
+        } else if (diffMinutes < 0 && !r.isAcknowledgedPassed) {
+            if (!document.querySelector(`[data-reminder-id="${r._id}"]`)) {
+                const passedMin = Math.abs(diffMinutes);
+                let passedStr = `${passedMin} min`;
+                if (passedMin >= 60) {
+                    passedStr = `${Math.floor(passedMin / 60)} hr ${passedMin % 60} min`;
+                }
+                const msg = `Reminder: ${r.title} has passed by ${passedStr}`;
+                
+                const notif = document.createElement('div');
+                notif.className = `notification warning persistent`;
+                notif.dataset.reminderId = r._id;
+                notif.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i> ${msg}
+                    <span class="close-notif" onclick="
+                        this.parentElement.remove();
+                        fetch('/api/reminders/${r._id}', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ isAcknowledgedPassed: true })
+                        });
+                    ">&times;</span>
+                `;
+                document.body.appendChild(notif);
+            }
         }
     });
 }
@@ -601,6 +685,17 @@ async function saveTask() {
         recurringType: document.getElementById('isRecurring').checked ? document.getElementById('recurringType').value : null
     };
 
+    // Block setting backward UNLESS overnight
+    if (taskData.endTime < taskData.startTime) {
+        const [sh] = taskData.startTime.split(':').map(Number);
+        const [eh] = taskData.endTime.split(':').map(Number);
+        const isOvernight = sh >= 12 && eh < 12;
+        if (!isOvernight) {
+            showNotification('setting to back ward is not possible', 'warning');
+            return;
+        }
+    }
+
     // Check overlap
     const existingTasks = tasks.filter(t => t.date === taskData.date && t._id !== document.getElementById('taskModal').dataset.editId);
     
@@ -628,9 +723,9 @@ async function saveTask() {
         if (!confirm('⚠️ This task overlaps with another task! Save anyway?')) return;
     }
 
-    // Block new tasks scheduled in the past
+    // Block new tasks scheduled in the past, UNLESS recurring
     const editIdForPastCheck = document.getElementById('taskModal').dataset.editId;
-    if (!editIdForPastCheck && isTaskPast(taskData.date, taskData.startTime)) {
+    if (!editIdForPastCheck && !taskData.isRecurring && isTaskPast(taskData.date, taskData.startTime)) {
         showNotification('⚠️ Cannot schedule a task in the past!', 'warning');
         return;
     }
@@ -642,9 +737,51 @@ async function saveTask() {
             tasks = await API.getTasks();
             showNotification('Task updated!', 'success');
         } else {
-            await API.createTask(taskData);
+            const tasksToCreate = [taskData];
+            if (taskData.isRecurring && taskData.recurringType) {
+                const baseDate = new Date(taskData.date);
+                if (taskData.recurringType === 'daily') {
+                    // Until end of week (Sunday). Week is Mon-Sun
+                    const baseDay = baseDate.getDay(); // 0 is Sunday
+                    if (baseDay !== 0) {
+                        const daysLeft = 7 - baseDay; // Mon=1 -> 6 days left
+                        for (let i = 1; i <= daysLeft; i++) {
+                            const nextDate = new Date(baseDate);
+                            nextDate.setDate(baseDate.getDate() + i);
+                            tasksToCreate.push({ ...taskData, date: formatDate(nextDate) });
+                        }
+                    }
+                } else if (taskData.recurringType === 'weekly') {
+                    // Until end of month
+                    const currentMonth = baseDate.getMonth();
+                    for (let i = 1; i <= 5; i++) {
+                        const nextDate = new Date(baseDate);
+                        nextDate.setDate(baseDate.getDate() + (i * 7));
+                        if (nextDate.getMonth() === currentMonth) {
+                            tasksToCreate.push({ ...taskData, date: formatDate(nextDate) });
+                        } else {
+                            break;
+                        }
+                    }
+                } else if (taskData.recurringType === 'monthly') {
+                    // Until end of year
+                    const currentYear = baseDate.getFullYear();
+                    for (let i = 1; i <= 11; i++) {
+                        const nextDate = new Date(baseDate);
+                        nextDate.setMonth(baseDate.getMonth() + i);
+                        if (nextDate.getFullYear() === currentYear) {
+                            tasksToCreate.push({ ...taskData, date: formatDate(nextDate) });
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            await Promise.all(tasksToCreate.map(t => API.createTask(t)));
+
             tasks = await API.getTasks();
-            showNotification('Task created!', 'success');
+            showNotification(`Task${tasksToCreate.length > 1 ? 's' : ''} created!`, 'success');
         }
         closeModals();
         renderAllViews();
@@ -815,12 +952,23 @@ function closeModals() {
     delete document.getElementById('snoozeModal').dataset.snoozeId;
 }
 
-function showNotification(message, type = 'info') {
+function showNotification(message, type = 'info', persistent = false, onCloseCallback = null) {
     const notif = document.createElement('div');
-    notif.className = `notification ${type}`;
-    notif.innerHTML = `<i class="fas ${type === 'warning' ? 'fa-exclamation-triangle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+    notif.className = `notification ${type}${persistent ? ' persistent' : ''}`;
+    let html = `<i class="fas ${type === 'warning' ? 'fa-exclamation-triangle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+    if (persistent) {
+        const id = 'notif_' + Math.random().toString(36).substr(2, 9);
+        notif.id = id;
+        html += `<span class="close-notif" onclick="document.getElementById('${id}').remove(); if(window.${id}Callback) window.${id}Callback();">&times;</span>`;
+        if (onCloseCallback) {
+            window[`${id}Callback`] = onCloseCallback;
+        }
+    }
+    notif.innerHTML = html;
     document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 4000);
+    if (!persistent) {
+        setTimeout(() => notif.remove(), 4000);
+    }
 }
 
 function escapeHtml(str) {
