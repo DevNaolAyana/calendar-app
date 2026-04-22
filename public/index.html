@@ -95,6 +95,34 @@
 
         </div><!-- end daily-reminders-row -->
 
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- TODO PRODUCTIVITY SYSTEM v2.0.0                     -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="todo-section">
+            <div class="todo-section-header">
+                <div class="todo-section-title-group">
+                    <h2><i class="fas fa-tasks"></i> Todo Productivity</h2>
+                    <span class="todo-subtitle">Groups &rarr; Lists &rarr; Tasks</span>
+                </div>
+                <button id="addGroupBtn" class="add-btn"><i class="fas fa-folder-plus"></i> New Group</button>
+            </div>
+            <div class="todo-layout">
+                <!-- Left: Todo List (70%) -->
+                <div class="todo-list-panel">
+                    <div id="todoGroupsContainer"></div>
+                </div>
+                <!-- Right: Due Dates (30%) -->
+                <div class="due-dates-panel">
+                    <div class="due-dates-header">
+                        <h3><i class="fas fa-calendar-check"></i> Due Dates</h3>
+                        <span class="due-dates-count" id="dueDatesCount">0 tasks</span>
+                    </div>
+                    <div class="due-dates-list" id="dueDatesList"></div>
+                </div>
+            </div>
+        </div>
+        <!-- ═══════════════════════════════════════════════════ -->
+
         <!-- Week View -->
         <div class="week-view">
             <div class="view-header">
@@ -114,6 +142,9 @@
             </div>
             <div id="monthView" class="month-view-container"></div>
         </div>
+
+        <!-- Version Footer -->
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.0.0 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -214,6 +245,86 @@
         </div>
     </div>
 
+    <!-- Todo Task Modal -->
+    <div id="todoTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close todo-modal-close">&times;</span>
+            <h3 id="todoTaskModalTitle"><i class="fas fa-tasks"></i> Add Todo Task</h3>
+            <form id="todoTaskForm">
+                <div class="input-group">
+                    <i class="fas fa-heading"></i>
+                    <input type="text" id="todoTaskTitle" placeholder="Task title" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-calendar-day"></i>
+                    <input type="date" id="todoTaskDueDate" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-hourglass-half"></i>
+                    <input type="text" id="todoTaskDuration" placeholder="Duration e.g. 2hr 30min (optional)">
+                </div>
+                <div class="todo-important-toggle">
+                    <label class="todo-toggle-label">
+                        <input type="checkbox" id="todoTaskImportant">
+                        <i class="fas fa-star"></i> Mark as Important
+                        <span class="todo-toggle-hint">(appears in main calendar)</span>
+                    </label>
+                </div>
+                <div id="todoImportantFields" style="display:none;">
+                    <div class="input-group">
+                        <i class="fas fa-calendar"></i>
+                        <input type="date" id="todoTaskDate" placeholder="Calendar date">
+                    </div>
+                    <div class="row">
+                        <div class="input-group half">
+                            <i class="fas fa-play"></i>
+                            <input type="time" id="todoTaskStartTime" step="60">
+                        </div>
+                        <div class="input-group half">
+                            <i class="fas fa-stop"></i>
+                            <input type="time" id="todoTaskEndTime" step="60">
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button type="submit" style="flex:2;"><i class="fas fa-save"></i> Save Task</button>
+                    <button type="button" id="deleteTodoFromModalBtn" class="delete-modal-btn" style="flex:1; display:none; background:#e74c3c;"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Group Modal -->
+    <div id="addGroupModal" class="modal">
+        <div class="modal-content" style="max-width:380px;">
+            <span class="close todo-modal-close">&times;</span>
+            <h3><i class="fas fa-folder-plus"></i> New Group</h3>
+            <form id="addGroupForm">
+                <div class="input-group">
+                    <i class="fas fa-folder"></i>
+                    <input type="text" id="groupNameInput" placeholder="Group name e.g. Udemy Courses" required>
+                </div>
+                <button type="submit"><i class="fas fa-plus"></i> Create Group</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add List Modal -->
+    <div id="addListModal" class="modal">
+        <div class="modal-content" style="max-width:380px;">
+            <span class="close todo-modal-close">&times;</span>
+            <h3><i class="fas fa-list-ul"></i> New List</h3>
+            <form id="addListForm">
+                <div class="input-group">
+                    <i class="fas fa-list"></i>
+                    <input type="text" id="listNameInput" placeholder="List name e.g. Angela Web Dev" required>
+                </div>
+                <button type="submit"><i class="fas fa-plus"></i> Create List</button>
+            </form>
+        </div>
+    </div>
+
     <script src="/js/app.js"></script>
+    <script src="/js/todo.js"></script>
 </body>
 </html>

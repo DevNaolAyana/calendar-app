@@ -250,17 +250,25 @@ async function loadAllData() {
     renderAllViews();
     renderRemindersTable();
     checkAndNotifyReminders();
+    // Load todo system
+    if (window.loadTodoData) await window.loadTodoData();
 }
 
-// NEW FUNCTION: Toggle task completion
+// Toggle task completion (handles both calendar tasks AND important todo tasks)
 async function toggleTaskComplete(taskId, isCompleted) {
     try {
+        // Check if it's a todo task
+        const isTodo = (window.todoImportantTasks || []).some(t => String(t._id) === String(taskId));
+        if (isTodo) {
+            if (window.toggleTodoTask) await window.toggleTodoTask(taskId, isCompleted);
+            return;
+        }
         const task = tasks.find(t => t._id === taskId);
         if (task) {
             const updatedTask = { ...task, completed: isCompleted };
             await API.updateTask(taskId, updatedTask);
             tasks = await API.getTasks();
-            renderAllViews(); // Refresh current view
+            renderAllViews();
             showNotification(isCompleted ? 'Task completed! ✓' : 'Task uncompleted', 'success');
         }
     } catch (error) {
@@ -546,11 +554,18 @@ function renderMonthView(date) {
     });
 }
 
-// Render All Views
+// Render All Views (merges important todo tasks into calendar for rendering)
 function renderAllViews() {
+    // Temporarily augment tasks with important todo tasks that have full time/date
+    const importantForCalendar = (window.todoImportantTasks || [])
+        .filter(t => t.isImportant && t.date && t.startTime && t.endTime && !t.completed)
+        .map(t => ({ ...t, _isTodoTask: true }));
+    const savedTasks = tasks;
+    tasks = [...tasks, ...importantForCalendar];
     renderDayView(currentDate);
     renderWeekView(currentDate);
     renderMonthView(currentDate);
+    tasks = savedTasks;
 }
 
 // Render Reminders Table

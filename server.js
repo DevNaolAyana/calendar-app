@@ -21,9 +21,10 @@ mongoose.connect(process.env.MONGODB_URI)
     .catch(err => console.log('❌ MongoDB error:', err));
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/tasks', require('./routes/taskRoutes'));
+app.use('/api/auth',      require('./routes/authRoutes'));
+app.use('/api/tasks',     require('./routes/taskRoutes'));
 app.use('/api/reminders', require('./routes/reminderRoutes'));
+app.use('/api/todo',      require('./routes/todoRoutes'));
 
 // Start server
 app.listen(PORT, () => {
