@@ -60,11 +60,27 @@
             </div>
         </div>
 
+        <!-- Quick Navigation Bar -->
+        <nav class="quick-nav" id="quickNav">
+            <!-- Desktop: 4 links -->
+            <a class="qnav-link desktop-only" href="#section-daily"   onclick="qnavScroll('section-daily',   this)"><i class="fas fa-sun"></i> Daily View</a>
+            <a class="qnav-link desktop-only" href="#section-todo"    onclick="qnavScroll('section-todo',    this)"><i class="fas fa-tasks"></i> Todo</a>
+            <a class="qnav-link desktop-only" href="#section-weekly"  onclick="qnavScroll('section-weekly',  this)"><i class="fas fa-calendar-week"></i> Weekly View</a>
+            <a class="qnav-link desktop-only" href="#section-monthly" onclick="qnavScroll('section-monthly', this)"><i class="fas fa-calendar-alt"></i> Monthly View</a>
+            <!-- Mobile: 6 links (all) -->
+            <a class="qnav-link mobile-only" href="#section-daily"     onclick="qnavScroll('section-daily',     this)"><i class="fas fa-sun"></i> Daily</a>
+            <a class="qnav-link mobile-only" href="#section-reminders" onclick="qnavScroll('section-reminders', this)"><i class="fas fa-bell"></i> Reminders</a>
+            <a class="qnav-link mobile-only" href="#section-todo"      onclick="qnavScroll('section-todo',      this)"><i class="fas fa-tasks"></i> Todo</a>
+            <a class="qnav-link mobile-only" href="#section-due-dates" onclick="qnavScroll('section-due-dates', this)"><i class="fas fa-calendar-check"></i> Due Dates</a>
+            <a class="qnav-link mobile-only" href="#section-weekly"    onclick="qnavScroll('section-weekly',    this)"><i class="fas fa-calendar-week"></i> Weekly</a>
+            <a class="qnav-link mobile-only" href="#section-monthly"   onclick="qnavScroll('section-monthly',   this)"><i class="fas fa-calendar-alt"></i> Monthly</a>
+        </nav>
+
         <!-- Daily + Reminders Row -->
         <div class="daily-reminders-row">
 
             <!-- Day View -->
-            <div class="day-view">
+            <div class="day-view" id="section-daily">
                 <div class="view-header">
                     <button id="prevDay"><i class="fas fa-chevron-left"></i></button>
                     <h2 id="dayTitle"></h2>
@@ -74,7 +90,7 @@
             </div>
 
             <!-- Reminders Table -->
-            <div class="reminders-section">
+            <div class="reminders-section" id="section-reminders">
                 <div class="reminders-header">
                     <h3><i class="fas fa-bell"></i> Reminders</h3>
                     <button id="addReminderBtn" class="add-btn"><i class="fas fa-plus"></i> Add Reminder</button>
@@ -98,7 +114,7 @@
         <!-- ═══════════════════════════════════════════════════ -->
         <!-- TODO PRODUCTIVITY SYSTEM v2.0.0                     -->
         <!-- ═══════════════════════════════════════════════════ -->
-        <div class="todo-section">
+        <div class="todo-section" id="section-todo">
             <div class="todo-section-header">
                 <div class="todo-section-title-group">
                     <h2><i class="fas fa-tasks"></i> Todo Productivity</h2>
@@ -112,7 +128,7 @@
                     <div id="todoGroupsContainer"></div>
                 </div>
                 <!-- Right: Due Dates (30%) -->
-                <div class="due-dates-panel">
+                <div class="due-dates-panel" id="section-due-dates">
                     <div class="due-dates-header">
                         <h3><i class="fas fa-calendar-check"></i> Due Dates</h3>
                         <span class="due-dates-count" id="dueDatesCount">0 tasks</span>
@@ -124,7 +140,7 @@
         <!-- ═══════════════════════════════════════════════════ -->
 
         <!-- Week View -->
-        <div class="week-view">
+        <div class="week-view" id="section-weekly">
             <div class="view-header">
                 <button id="prevWeek"><i class="fas fa-chevron-left"></i></button>
                 <h2 id="weekTitle"></h2>
@@ -134,7 +150,7 @@
         </div>
 
         <!-- Month View -->
-        <div class="month-view">
+        <div class="month-view" id="section-monthly">
             <div class="view-header">
                 <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
                 <h2 id="monthTitle"></h2>
@@ -144,7 +160,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.0.0 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.1.0 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 

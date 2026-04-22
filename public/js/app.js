@@ -1128,4 +1128,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.toggleTaskComplete = toggleTaskComplete;
     window.openSnoozeModal = openSnoozeModal;
     window.acknowledgePassedReminder = acknowledgePassedReminder;
+
+    // ── Quick Navigation ──────────────────────────────────────────
+    window.qnavScroll = function qnavScroll(sectionId, linkEl) {
+        const target = document.getElementById(sectionId);
+        if (!target) return;
+        // Prevent default href jump; use smooth scroll instead
+        setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 10);
+        // Immediately highlight the clicked link
+        setActiveNavLink(sectionId);
+    };
+
+    // Map section ID → which nav links to activate (desktop + mobile share same IDs)
+    const SECTION_IDS = [
+        'section-daily',
+        'section-reminders',
+        'section-todo',
+        'section-due-dates',
+        'section-weekly',
+        'section-monthly'
+    ];
+
+    function setActiveNavLink(activeSectionId) {
+        document.querySelectorAll('.qnav-link').forEach(a => {
+            const href = a.getAttribute('href'); // e.g. "#section-daily"
+            const id   = href ? href.replace('#', '') : '';
+            a.classList.toggle('qnav-active', id === activeSectionId);
+        });
+    }
+
+    // Scroll-spy: use IntersectionObserver on each section
+    const spyOptions = {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px', // fire when section is ~top-quarter of viewport
+        threshold: 0
+    };
+
+    const spyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                setActiveNavLink(entry.target.id);
+            }
+        });
+    }, spyOptions);
+
+    // Observe all sections (some may not exist on mobile layout — that's fine)
+    SECTION_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) spyObserver.observe(el);
+    });
+
+    // Highlight "Daily View" by default on load
+    setActiveNavLink('section-daily');
 });

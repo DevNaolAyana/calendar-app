@@ -1785,4 +1785,111 @@ body.dark-mode .todo-list-header {
         flex-direction: column;
         align-items: flex-start;
     }
-}
+}
+
+/* ================================================================
+   QUICK NAVIGATION BAR v2.1.0
+   ================================================================ */
+
+.quick-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    flex-wrap: wrap;
+}
+
+body.dark-mode .quick-nav {
+    background: #16213e;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Individual nav link */
+.qnav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s, transform 0.15s, box-shadow 0.2s;
+    white-space: nowrap;
+    min-height: 36px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: #f5f5f5;
+}
+
+body.dark-mode .qnav-link {
+    background: #0f3460;
+    color: #bbb;
+}
+
+.qnav-link i {
+    font-size: 12px;
+    color: #667eea;
+    transition: color 0.2s;
+}
+
+/* Hover */
+.qnav-link:hover {
+    background: #667eea15;
+    color: #667eea;
+    border-color: #667eea40;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+}
+
+body.dark-mode .qnav-link:hover {
+    background: rgba(102, 126, 234, 0.2);
+    color: #a0b0ff;
+}
+
+/* Active / currently in view */
+.qnav-link.qnav-active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+}
+
+.qnav-link.qnav-active i {
+    color: white;
+}
+
+body.dark-mode .qnav-link.qnav-active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+/* Desktop: show desktop-only, hide mobile-only */
+.mobile-only  { display: none !important; }
+.desktop-only { display: inline-flex !important; }
+
+/* Mobile: show mobile-only, hide desktop-only */
+@media (max-width: 768px) {
+    .desktop-only { display: none !important; }
+    .mobile-only  { display: inline-flex !important; }
+
+    .quick-nav {
+        justify-content: flex-start;
+        gap: 6px;
+        padding: 8px 12px;
+    }
+
+    .qnav-link {
+        font-size: 12px;
+        padding: 10px 14px;  /* generous tap target */
+        min-height: 44px;    /* meets 44px tap target rule */
+        border-radius: 10px;
+    }
+}
+
