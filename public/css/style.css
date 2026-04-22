@@ -1198,3 +1198,591 @@ body.dark-mode .week-task.empty {
         width: 100%;
     }
 }
+
+/* ================================================================
+   TODO PRODUCTIVITY SYSTEM v2.0.0
+   Matches existing app theme: same card style, fonts, colors
+   ================================================================ */
+
+/* ── Section wrapper ─────────────────────────────────────────── */
+.todo-section {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .todo-section {
+    background: #16213e;
+    color: #eee;
+}
+
+/* ── Section header (title + New Group button) ───────────────── */
+.todo-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.todo-section-title-group h2 {
+    font-size: 1.2rem;
+    color: #333;
+    margin: 0;
+}
+
+body.dark-mode .todo-section-title-group h2 {
+    color: #eee;
+}
+
+.todo-section-title-group h2 i {
+    color: #667eea;
+    margin-right: 8px;
+}
+
+.todo-subtitle {
+    font-size: 12px;
+    color: #999;
+    display: block;
+    margin-top: 2px;
+}
+
+/* ── 70 / 30 layout ─────────────────────────────────────────── */
+.todo-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.todo-list-panel {
+    flex: 0 0 calc(70% - 10px);
+    min-width: 0;
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+.due-dates-panel {
+    flex: 0 0 calc(30% - 10px);
+    min-width: 0;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    max-height: 520px;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+}
+
+body.dark-mode .due-dates-panel {
+    background: #0f3460;
+    border-color: #2c3e6d;
+}
+
+/* ── Due Dates panel header ──────────────────────────────────── */
+.due-dates-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.due-dates-header h3 {
+    font-size: 14px;
+    color: #667eea;
+    margin: 0;
+}
+
+.due-dates-header h3 i {
+    margin-right: 6px;
+}
+
+.due-dates-count {
+    font-size: 11px;
+    background: #667eea;
+    color: white;
+    border-radius: 20px;
+    padding: 2px 8px;
+}
+
+/* ── Due Date items ──────────────────────────────────────────── */
+.due-date-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    margin-bottom: 7px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    transition: background 0.2s;
+}
+
+body.dark-mode .due-date-item {
+    background: #16213e;
+    border-color: #2c3e6d;
+}
+
+.due-date-item.overdue {
+    border-left: 3px solid #e74c3c;
+    background: #fff5f5;
+}
+
+body.dark-mode .due-date-item.overdue {
+    background: #2a1a1a;
+}
+
+.due-date-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.due-date-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .due-date-title {
+    color: #eee;
+}
+
+.due-date-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 3px;
+    font-size: 11px;
+    color: #888;
+}
+
+body.dark-mode .due-date-meta {
+    color: #aaa;
+}
+
+.due-date-meta i {
+    margin-right: 3px;
+}
+
+.due-dates-empty {
+    text-align: center;
+    padding: 30px 10px;
+    color: #aaa;
+    font-size: 13px;
+}
+
+.due-dates-empty i {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+    color: #27ae60;
+}
+
+/* ── Groups ──────────────────────────────────────────────────── */
+.todo-group {
+    margin-bottom: 14px;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+    background: white;
+}
+
+body.dark-mode .todo-group {
+    background: #0f3460;
+    border-color: #2c3e6d;
+}
+
+.todo-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border-bottom: 1px solid #e0e0e0;
+    cursor: default;
+}
+
+body.dark-mode .todo-group-header {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: #2c3e6d;
+}
+
+.todo-group-title-row,
+.todo-list-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.todo-group-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .todo-group-name {
+    color: #eee;
+}
+
+.todo-folder-icon { color: #f39c12; }
+.todo-list-icon   { color: #3498db; }
+
+/* ── Lists ───────────────────────────────────────────────────── */
+.todo-list-item {
+    margin: 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+body.dark-mode .todo-list-item {
+    border-color: #1e3060;
+}
+
+.todo-list-item:last-child { border-bottom: none; }
+
+.todo-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px 9px 28px;
+    background: #fafafa;
+}
+
+body.dark-mode .todo-list-header {
+    background: #0a2545;
+}
+
+.todo-list-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .todo-list-name { color: #ccc; }
+
+.todo-list-body {
+    padding: 6px 10px 6px 38px;
+}
+
+/* ── Task cards ──────────────────────────────────────────────── */
+.todo-task-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    position: relative;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+body.dark-mode .todo-task-card {
+    background: #0f3460;
+    border-color: #2c3e6d;
+}
+
+.todo-task-card:hover {
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.todo-task-card.completed {
+    opacity: 0.55;
+    background: #f5f5f5;
+}
+
+body.dark-mode .todo-task-card.completed {
+    background: #0a1e3a;
+}
+
+.todo-task-card.overdue {
+    border-left: 3px solid #e74c3c;
+    background: #fff8f8;
+}
+
+body.dark-mode .todo-task-card.overdue {
+    background: #2a1515;
+}
+
+.todo-task-card.important {
+    border-left: 3px solid #f39c12;
+}
+
+/* ── Star badge (top-right for important tasks) ──────────────── */
+.todo-star-badge {
+    position: absolute;
+    top: 6px;
+    right: 80px;
+    font-size: 11px;
+    color: #f39c12;
+    line-height: 1;
+}
+
+/* ── Task content ────────────────────────────────────────────── */
+.todo-task-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.todo-task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.todo-task-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .todo-task-title { color: #eee; }
+
+.todo-task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 3px;
+}
+
+.tmeta {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+body.dark-mode .tmeta { color: #aaa; }
+
+.tmeta.imp-time { color: #667eea; font-weight: 600; }
+.tmeta.overdue-text,
+span.overdue-text { color: #e74c3c !important; }
+.tmeta.overdue-warn { color: #e74c3c; font-weight: 600; }
+
+.strikethrough { text-decoration: line-through; opacity: 0.6; }
+
+/* ── Task action buttons ─────────────────────────────────────── */
+.todo-task-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.todo-hdr-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.todo-icon-btn {
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s, transform 0.15s;
+    background: transparent;
+}
+
+.todo-icon-btn:hover { transform: scale(1.15); }
+
+.todo-btn-add  { color: #27ae60; }
+.todo-btn-add:hover  { background: #e8f8f0; }
+
+.todo-btn-del  { color: #e74c3c; }
+.todo-btn-del:hover  { background: #fdecea; }
+
+.todo-btn-edit { color: #3498db; }
+.todo-btn-edit:hover { background: #eaf4fb; }
+
+.todo-btn-star     { color: #ccc; }
+.todo-btn-star:hover { color: #f39c12; background: #fef9ec; }
+
+.todo-btn-star-on  { color: #f39c12; }
+.todo-btn-star-on:hover { background: #fef9ec; }
+
+body.dark-mode .todo-btn-add:hover  { background: #0f3460; }
+body.dark-mode .todo-btn-del:hover  { background: #3a1515; }
+body.dark-mode .todo-btn-edit:hover { background: #0a2a4a; }
+
+/* ── Collapse button ─────────────────────────────────────────── */
+.todo-collapse-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    width: 18px;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.todo-collapse-btn:hover { color: #667eea; }
+
+/* ── Count badge ─────────────────────────────────────────────── */
+.todo-count-badge {
+    font-size: 10px;
+    background: #667eea22;
+    color: #667eea;
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ── Empty states ────────────────────────────────────────────── */
+.todo-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+}
+
+.todo-empty-state i {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 10px;
+    color: #667eea55;
+}
+
+.todo-no-items {
+    font-size: 12px;
+    color: #bbb;
+    padding: 8px 4px;
+    font-style: italic;
+}
+
+/* ── Important toggle in modal ───────────────────────────────── */
+.todo-important-toggle {
+    margin: 12px 0;
+    padding: 10px 14px;
+    background: #fef9ec;
+    border-radius: 8px;
+    border: 1px solid #f39c1230;
+}
+
+body.dark-mode .todo-important-toggle {
+    background: #1a1500;
+    border-color: #f39c1240;
+}
+
+.todo-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f39c12;
+}
+
+.todo-toggle-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #f39c12;
+}
+
+.todo-toggle-hint {
+    font-size: 11px;
+    color: #aaa;
+    font-weight: 400;
+}
+
+/* ── Checkbox ────────────────────────────────────────────────── */
+.todo-cb {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #667eea;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ── Version footer ──────────────────────────────────────────── */
+.app-version {
+    text-align: center;
+    font-size: 12px;
+    color: #667eea;
+    opacity: 0.6;
+    padding: 18px 0 6px;
+    letter-spacing: 0.5px;
+}
+
+.app-version i { margin-right: 5px; }
+
+/* ── Dark mode extras ────────────────────────────────────────── */
+body.dark-mode .todo-group-header,
+body.dark-mode .todo-list-header {
+    border-color: #2c3e6d;
+}
+
+/* ── Mobile responsive (≤768px): stack Todo then Due Dates ───── */
+@media (max-width: 768px) {
+    .todo-layout {
+        flex-direction: column;
+    }
+
+    .todo-list-panel,
+    .due-dates-panel {
+        flex: 0 0 100%;
+        width: 100%;
+        max-height: none;
+        position: static;
+    }
+
+    .todo-list-panel {
+        max-height: 400px;
+    }
+
+    .todo-task-card {
+        flex-wrap: wrap;
+    }
+
+    .todo-star-badge {
+        right: 6px;
+    }
+
+    .todo-task-actions {
+        gap: 2px;
+    }
+
+    .todo-icon-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+
+    .todo-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
