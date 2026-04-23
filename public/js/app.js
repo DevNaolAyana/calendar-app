@@ -507,12 +507,20 @@ function renderMonthView(date) {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
-    const startDay = firstDay.getDay();
+    let startDay = firstDay.getDay();
+    startDay = startDay === 0 ? 6 : startDay - 1; // Adjust for Monday start
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const container = document.getElementById('monthView');
     document.getElementById('monthTitle').innerText = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     let html = '';
+    
+    // Add Day Headers
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    dayNames.forEach(day => {
+        html += `<div class="month-day-header">${day}</div>`;
+    });
+
     for (let i = 0; i < startDay; i++) {
         let prevMonthDate = new Date(year, month, -startDay + i + 1);
         html += `<div class="month-day other-month" onclick="goToDate('${formatDate(prevMonthDate)}')"><div class="month-day-number">${prevMonthDate.getDate()}</div></div>`;

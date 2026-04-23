@@ -430,6 +430,18 @@ body.dark-mode .month-day:hover {
     background: #1a2a4a;
 }
 
+.month-day-header {
+    font-weight: bold;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+    margin-bottom: 5px;
+}
+
+body.dark-mode .month-day-header {
+    border-bottom-color: #2c3e6d;
+}
+
 .month-day-number {
     font-weight: bold;
     margin-bottom: 5px;
