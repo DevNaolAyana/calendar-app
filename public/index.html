@@ -7,6 +7,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
 </head>
 <body>
     <!-- Login/Signup Screen -->
@@ -123,11 +124,32 @@
                 <button id="addGroupBtn" class="add-btn"><i class="fas fa-folder-plus"></i> New Group</button>
             </div>
             <div class="todo-layout">
-                <!-- Left: Todo List (70%) -->
+                <!-- Left: Todo List (50%) -->
                 <div class="todo-list-panel">
+                    <div class="todo-controls">
+                        <div class="search-container">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="todoSearchInput" placeholder="Search tasks by title...">
+                        </div>
+                        <div class="category-filters" id="todoCategoryFilters">
+                            <button class="cat-filter active" data-cat="All">All</button>
+                            <button class="cat-filter" data-cat="Work">Work</button>
+                            <button class="cat-filter" data-cat="Personal">Personal</button>
+                            <button class="cat-filter" data-cat="Study">Study</button>
+                        </div>
+                    </div>
                     <div id="todoGroupsContainer"></div>
                 </div>
-                <!-- Right: Due Dates (30%) -->
+                <!-- Middle: Stats (25%) -->
+                <div class="stats-panel" id="section-stats">
+                    <div class="stats-header">
+                        <h3><i class="fas fa-chart-bar"></i> Stats</h3>
+                    </div>
+                    <div class="stats-content" id="statsContent">
+                        <!-- Stats rendered here -->
+                    </div>
+                </div>
+                <!-- Right: Due Dates (25%) -->
                 <div class="due-dates-panel" id="section-due-dates">
                     <div class="due-dates-header">
                         <h3><i class="fas fa-calendar-check"></i> Due Dates</h3>
@@ -160,7 +182,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.2.0 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.3.0 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -278,6 +300,15 @@
                 <div class="input-group">
                     <i class="fas fa-hourglass-half"></i>
                     <input type="text" id="todoTaskDuration" placeholder="Duration e.g. 2hr 30min (optional)">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-tags"></i>
+                    <select id="todoTaskCategory">
+                        <option value="">None</option>
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Study">Study</option>
+                    </select>
                 </div>
                 <div class="todo-important-toggle">
                     <label class="todo-toggle-label">

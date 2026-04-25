@@ -11,6 +11,9 @@ let todoListsCache  = {}; // groupId  -> [list, ...]
 let todoTasksCache  = {}; // listId   -> [task, ...]
 let _currentGroupId = null; // for add-list modal
 
+window.todoSearchQuery = '';
+window.todoCategoryFilter = 'All';
+
 // ─── API ────────────────────────────────────────────────────────
 const TodoAPI = {
     async req(url, opts = {}) {
@@ -50,6 +53,7 @@ async function loadTodoData() {
         window.todoImportantTasks = await TodoAPI.getImportantTasks();
         renderTodoGroups();
         renderDueDates();
+        renderStats();
         if (window.renderAllViews) window.renderAllViews(); // refresh calendar
     } catch (e) { console.error('loadTodoData:', e); }
 }
@@ -81,7 +85,15 @@ function renderTodoGroups() {
         cont.innerHTML = `<div class="todo-empty-state"><i class="fas fa-folder-open"></i><p>No groups yet — click <strong>New Group</strong> to start!</p></div>`;
         return;
     }
-    cont.innerHTML = todoGroups.map(g => `
+    
+    let html = '';
+    for (const g of todoGroups) {
+        const listsHtml = renderListsHtml(g._id);
+        const taskCount = _groupTaskCount(g._id);
+        
+        if ((window.todoSearchQuery || window.todoCategoryFilter !== 'All') && !listsHtml) continue;
+        
+        html += `
     <div class="todo-group" data-group-id="${g._id}">
       <div class="todo-group-header">
         <div class="todo-group-title-row">
@@ -90,7 +102,7 @@ function renderTodoGroups() {
           </button>
           <i class="fas fa-folder todo-folder-icon"></i>
           <span class="todo-group-name">${_esc(g.name)}</span>
-          <span class="todo-count-badge">${_groupTaskCount(g._id)}</span>
+          <span class="todo-count-badge">${taskCount}</span>
         </div>
         <div class="todo-hdr-actions">
           <button class="todo-icon-btn todo-btn-add" onclick="openAddListModal('${g._id}')" title="Add List"><i class="fas fa-plus"></i></button>
@@ -98,17 +110,27 @@ function renderTodoGroups() {
         </div>
       </div>
       <div class="todo-group-body" id="g-body-${g._id}">
-        ${renderListsHtml(g._id)}
+        ${listsHtml || `<div class="todo-no-items"><i class="fas fa-list"></i> No matching lists.</div>`}
       </div>
-    </div>`).join('');
+    </div>`;
+    }
+    cont.innerHTML = html || `<div class="todo-empty-state"><p>No matching tasks found.</p></div>`;
 }
 
 function renderListsHtml(gid) {
     const lists = todoListsCache[gid] || [];
-    if (!lists.length) return `<div class="todo-no-items"><i class="fas fa-list"></i> No lists — add one!</div>`;
-    return lists.map(l => {
+    if (!lists.length) {
+        if (window.todoSearchQuery || window.todoCategoryFilter !== 'All') return '';
+        return `<div class="todo-no-items"><i class="fas fa-list"></i> No lists — add one!</div>`;
+    }
+    let html = '';
+    for (const l of lists) {
         const tasks = todoTasksCache[l._id] || [];
-        return `
+        const tasksHtml = renderTasksHtml(tasks);
+        
+        if ((window.todoSearchQuery || window.todoCategoryFilter !== 'All') && !tasksHtml) continue;
+        
+        html += `
     <div class="todo-list-item" data-list-id="${l._id}">
       <div class="todo-list-header">
         <div class="todo-list-title-row">
@@ -125,24 +147,44 @@ function renderListsHtml(gid) {
         </div>
       </div>
       <div class="todo-list-body" id="l-body-${l._id}">
-        ${renderTasksHtml(tasks)}
+        ${tasksHtml || `<div class="todo-no-items"><i class="fas fa-check-circle"></i> No matching tasks.</div>`}
       </div>
     </div>`;
-    }).join('');
+    }
+    return html;
 }
 
 function renderTasksHtml(tasks) {
-    if (!tasks.length) return `<div class="todo-no-items"><i class="fas fa-check-circle"></i> No tasks — add one!</div>`;
     const today = _today();
-    return tasks.map(t => {
+    const query = (window.todoSearchQuery || '').toLowerCase();
+    const cat = window.todoCategoryFilter || 'All';
+    
+    let filteredTasks = tasks;
+    if (query) {
+        filteredTasks = filteredTasks.filter(t => (t.title || '').toLowerCase().includes(query));
+    }
+    if (cat !== 'All') {
+        filteredTasks = filteredTasks.filter(t => t.category === cat);
+    }
+    
+    if (!filteredTasks.length) return '';
+    
+    return filteredTasks.map(t => {
         const overdue = !t.completed && t.dueDate < today;
+        let titleHtml = _esc(t.title);
+        if (query) {
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`, 'gi');
+            titleHtml = titleHtml.replace(regex, '<mark>$1</mark>');
+        }
+        
+        const catDot = t.category && t.category !== 'None' ? `<span class="cat-dot cat-${t.category}" title="${t.category}"></span>` : '';
+        
         return `
     <div class="todo-task-card${t.completed?' completed':''}${overdue?' overdue':''}${t.isImportant?' important':''}" data-task-id="${t._id}">
-      ${t.isImportant ? '<span class="todo-star-badge"><i class="fas fa-star"></i></span>' : ''}
       <div class="todo-task-left">
         <input type="checkbox" class="todo-cb" ${t.completed?'checked':''} onchange="toggleTodoTask('${t._id}',this.checked)">
         <div class="todo-task-info">
-          <div class="todo-task-title${t.completed?' strikethrough':''}">${_esc(t.title)}</div>
+          <div class="todo-task-title${t.completed?' strikethrough':''}">${catDot}${titleHtml}</div>
           <div class="todo-task-meta">
             ${t.dueDate ? `<span class="tmeta${overdue?' overdue-text':''}"><i class="fas fa-calendar-day"></i> ${_fmt(t.dueDate)}</span>` : ''}
             ${t.duration ? `<span class="tmeta"><i class="fas fa-hourglass-half"></i> ${_esc(t.duration)}</span>` : ''}
@@ -281,6 +323,7 @@ function openAddTodoTask(listId, groupId) {
     _currentTaskGroupId = groupId;
     document.getElementById('todoTaskForm').reset();
     document.getElementById('todoTaskModalTitle').innerHTML = '<i class="fas fa-tasks"></i> Add Todo Task';
+    document.getElementById('todoTaskCategory').value = '';
     document.getElementById('todoImportantFields').style.display = 'none';
     document.getElementById('deleteTodoFromModalBtn').style.display = 'none';
     document.getElementById('todoTaskModal').style.display = 'block';
@@ -303,6 +346,7 @@ function openEditTodoTask(taskId) {
     document.getElementById('todoTaskTitle').value      = found.title;
     document.getElementById('todoTaskDueDate').value   = found.dueDate;
     document.getElementById('todoTaskDuration').value  = found.duration || '';
+    document.getElementById('todoTaskCategory').value  = found.category || '';
     document.getElementById('todoTaskImportant').checked = found.isImportant;
     document.getElementById('todoImportantFields').style.display = found.isImportant ? '' : 'none';
     if (found.isImportant) {
@@ -323,6 +367,7 @@ async function saveTodoTask(e) {
         title:       document.getElementById('todoTaskTitle').value.trim(),
         dueDate:     document.getElementById('todoTaskDueDate').value,
         duration:    document.getElementById('todoTaskDuration').value.trim(),
+        category:    document.getElementById('todoTaskCategory').value,
         isImportant: isImp,
         startTime:   isImp ? document.getElementById('todoTaskStartTime').value : null,
         endTime:     isImp ? document.getElementById('todoTaskEndTime').value   : null,
@@ -362,6 +407,7 @@ async function toggleTodoTask(id, checked) {
     window.todoImportantTasks = (window.todoImportantTasks || []).filter(t => !(t._id === id && checked));
     renderTodoGroups();
     renderDueDates();
+    renderStats();
     if (window.renderAllViews) window.renderAllViews();
 }
 window.toggleTodoTask = toggleTodoTask;
@@ -389,6 +435,93 @@ async function toggleTodoImportant(id, current) {
     await loadTodoData();
 }
 window.toggleTodoImportant = toggleTodoImportant;
+
+// ─── Stats ───────────────────────────────────────────────────────
+function renderStats() {
+    const statsContainer = document.getElementById('statsContent');
+    if (!statsContainer) return;
+
+    let todayCount = 0;
+    let weekCount = 0;
+    let monthCount = 0;
+    let importantHrsWeek = 0;
+
+    const n = new Date();
+    const todayStr = _today();
+    
+    // Calculate start of week (Monday) and start of month
+    const dayOfWeek = n.getDay() || 7; // 1-7 (Mon-Sun)
+    const startOfWeek = new Date(n);
+    startOfWeek.setDate(n.getDate() - dayOfWeek + 1);
+    startOfWeek.setHours(0,0,0,0);
+    
+    const startOfMonth = new Date(n.getFullYear(), n.getMonth(), 1);
+
+    for (const g of todoGroups) {
+        for (const l of (todoListsCache[g._id] || [])) {
+            for (const t of (todoTasksCache[l._id] || [])) {
+                if (t.completed) {
+                    const refDateStr = t.completedAt || t.updatedAt || t.dueDate || todayStr;
+                    const refDate = new Date(refDateStr + 'T12:00:00');
+                    const refStr = refDateStr.split('T')[0];
+
+                    if (refStr === todayStr) todayCount++;
+                    if (refDate >= startOfWeek && refDate <= new Date()) weekCount++;
+                    if (refDate >= startOfMonth && refDate <= new Date()) monthCount++;
+
+                    if (t.isImportant && refDate >= startOfWeek && refDate <= new Date()) {
+                        let hrs = 0;
+                        if (t.duration) {
+                            const hrMatch = t.duration.match(/(\d+)\s*hr/i);
+                            const minMatch = t.duration.match(/(\d+)\s*min/i);
+                            if (hrMatch) hrs += parseInt(hrMatch[1]);
+                            if (minMatch) hrs += parseInt(minMatch[1]) / 60;
+                        }
+                        importantHrsWeek += hrs;
+                    }
+                }
+            }
+        }
+    }
+
+    const maxVal = Math.max(todayCount, weekCount, monthCount, 1);
+    const todayPct = (todayCount / maxVal) * 100;
+    const weekPct = (weekCount / maxVal) * 100;
+    const monthPct = (monthCount / maxVal) * 100;
+
+    statsContainer.innerHTML = `
+        <div class="stat-item">
+            <span class="stat-label">Completed Today</span>
+            <span class="stat-value">${todayCount}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Completed This Week</span>
+            <span class="stat-value">${weekCount}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Completed This Month</span>
+            <span class="stat-value">${monthCount}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Important Hours (Week)</span>
+            <span class="stat-value">${importantHrsWeek.toFixed(1)}h</span>
+        </div>
+        <div class="stat-chart-container">
+            <div class="stat-bar-wrapper">
+                <div class="stat-bar" style="height: ${todayPct}%"></div>
+                <span class="stat-bar-label">TODAY</span>
+            </div>
+            <div class="stat-bar-wrapper">
+                <div class="stat-bar" style="height: ${weekPct}%"></div>
+                <span class="stat-bar-label">WEEK</span>
+            </div>
+            <div class="stat-bar-wrapper">
+                <div class="stat-bar" style="height: ${monthPct}%"></div>
+                <span class="stat-bar-label">MONTH</span>
+            </div>
+        </div>
+    `;
+}
 
 // ─── Modal helpers ───────────────────────────────────────────────
 function closeTodoModals() {
@@ -425,5 +558,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     window.addEventListener('click', (e) => {
         if (['todoTaskModal','addGroupModal','addListModal'].includes(e.target.id)) closeTodoModals();
+    });
+
+    // Search and Category Filters
+    const searchInput = document.getElementById('todoSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            window.todoSearchQuery = e.target.value;
+            renderTodoGroups();
+        });
+    }
+
+    document.querySelectorAll('.cat-filter').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.cat-filter').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            window.todoCategoryFilter = e.target.getAttribute('data-cat');
+            renderTodoGroups();
+        });
     });
 });

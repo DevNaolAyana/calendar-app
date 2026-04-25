@@ -1262,22 +1262,22 @@ body.dark-mode .todo-section-title-group h2 {
     margin-top: 2px;
 }
 
-/* ── 70 / 30 layout ─────────────────────────────────────────── */
+/* ── 50 / 25 / 25 layout ─────────────────────────────────────────── */
 .todo-layout {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
     gap: 20px;
     align-items: flex-start;
 }
 
 .todo-list-panel {
-    flex: 0 0 calc(70% - 10px);
     min-width: 0;
     max-height: 520px;
     overflow-y: auto;
 }
 
+.stats-panel,
 .due-dates-panel {
-    flex: 0 0 calc(30% - 10px);
     min-width: 0;
     background: #fafafa;
     border-radius: 12px;
@@ -1289,9 +1289,194 @@ body.dark-mode .todo-section-title-group h2 {
     top: 0;
 }
 
+body.dark-mode .stats-panel,
 body.dark-mode .due-dates-panel {
     background: #0f3460;
     border-color: #2c3e6d;
+}
+
+@media (max-width: 768px) {
+    .todo-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-panel, .due-dates-panel {
+        position: relative;
+    }
+}
+
+/* ── Todo Controls (Search & Filters) ───────────────────────── */
+.todo-controls {
+    margin-bottom: 15px;
+}
+
+.search-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.search-container i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fafafa;
+    color: #333;
+}
+
+body.dark-mode .search-container input {
+    background: #0f3460;
+    border-color: #2c3e6d;
+    color: #eee;
+}
+
+.category-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.cat-filter {
+    padding: 6px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    color: #555;
+    transition: all 0.2s;
+}
+
+body.dark-mode .cat-filter {
+    background: #16213e;
+    border-color: #2c3e6d;
+    color: #aaa;
+}
+
+.cat-filter:hover {
+    background: #f0f0f0;
+}
+
+body.dark-mode .cat-filter:hover {
+    background: #1e2d54;
+}
+
+.cat-filter.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* ── Category Dots ─────────────────────────────────────────── */
+.cat-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+.cat-Work { background-color: #2ecc71; }     /* Green */
+.cat-Personal { background-color: #3498db; } /* Blue */
+.cat-Study { background-color: #f1c40f; }    /* Yellow */
+
+/* ── Stats Dashboard ────────────────────────────────────────── */
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.stats-header h3 {
+    font-size: 14px;
+    color: #667eea;
+    margin: 0;
+}
+
+.stats-header h3 i {
+    margin-right: 6px;
+}
+
+.stat-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+body.dark-mode .stat-item {
+    background: #16213e;
+    border-color: #2c3e6d;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+body.dark-mode .stat-value {
+    color: #eee;
+}
+
+.stat-chart-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 60px;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #e0e0e0;
+}
+
+body.dark-mode .stat-chart-container {
+    border-top-color: #2c3e6d;
+}
+
+.stat-bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.stat-bar {
+    width: 100%;
+    background: #667eea;
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.5s ease;
+}
+
+.stat-bar-label {
+    font-size: 9px;
+    color: #888;
+    margin-top: 4px;
+    text-transform: uppercase;
 }
 
 /* ── Due Dates panel header ──────────────────────────────────── */
@@ -1538,14 +1723,7 @@ body.dark-mode .todo-task-card.overdue {
 }
 
 /* ── Star badge (top-right for important tasks) ──────────────── */
-.todo-star-badge {
-    position: absolute;
-    top: 6px;
-    right: 80px;
-    font-size: 11px;
-    color: #f39c12;
-    line-height: 1;
-}
+/* removed */
 
 /* ── Task content ────────────────────────────────────────────── */
 .todo-task-left {
