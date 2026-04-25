@@ -350,7 +350,6 @@ function openEditTodoTask(taskId) {
     document.getElementById('todoTaskImportant').checked = found.isImportant;
     document.getElementById('todoImportantFields').style.display = found.isImportant ? '' : 'none';
     if (found.isImportant) {
-        document.getElementById('todoTaskDate').value      = found.date      || '';
         document.getElementById('todoTaskStartTime').value = found.startTime || '';
         document.getElementById('todoTaskEndTime').value   = found.endTime   || '';
     }
@@ -362,20 +361,21 @@ window.openEditTodoTask = openEditTodoTask;
 async function saveTodoTask(e) {
     e.preventDefault();
     const isImp = document.getElementById('todoTaskImportant').checked;
+    const dueDateVal = document.getElementById('todoTaskDueDate').value;
     const data = {
         groupId:     _currentTaskGroupId,
         title:       document.getElementById('todoTaskTitle').value.trim(),
-        dueDate:     document.getElementById('todoTaskDueDate').value,
+        dueDate:     dueDateVal,
         duration:    document.getElementById('todoTaskDuration').value.trim(),
         category:    document.getElementById('todoTaskCategory').value,
         isImportant: isImp,
         startTime:   isImp ? document.getElementById('todoTaskStartTime').value : null,
         endTime:     isImp ? document.getElementById('todoTaskEndTime').value   : null,
-        date:        isImp ? document.getElementById('todoTaskDate').value       : null,
+        date:        isImp ? dueDateVal : null,
     };
     if (!data.title || !data.dueDate) return;
     if (isImp && (!data.startTime || !data.endTime || !data.date)) {
-        alert('Important tasks require a calendar Date, Start Time, and End Time.');
+        alert('Important tasks require a Start Time and End Time.');
         return;
     }
     if (_editingTaskId) {
