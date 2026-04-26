@@ -1,5 +1,6 @@
 // Global variables
 let currentDate = new Date();
+const HOUR_HEIGHT = 60; // 60px per hour for daily view
 let currentViewDate = new Date();
 let tasks = [];
 let reminders = [];
@@ -104,7 +105,9 @@ function updateDateTimeDisplay() {
     if (formatDate(now) === formatDate(currentDate)) {
         const indicator = document.getElementById('currentTimeLine');
         if (indicator) {
-            const top = (now.getHours() * 60 + now.getMinutes()) * (60 / 60); // 60px per hour
+            // Precise position including seconds for smooth movement
+            const totalMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
+            const top = totalMinutes * (HOUR_HEIGHT / 60);
             indicator.style.top = `${top}px`;
         }
     }
@@ -380,8 +383,6 @@ function renderDayView(date) {
     const container = document.getElementById('dayView');
     document.getElementById('dayTitle').innerText = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    const HOUR_HEIGHT = 60; // px per hour
-
     // Build hour grid background
     let slotsHtml = '';
     for (let hour = 0; hour < 24; hour++) {
@@ -445,7 +446,8 @@ function renderDayView(date) {
     const todayStr = formatDate(now);
     let timeLineHtml = '';
     if (dateStr === todayStr) {
-        const top = (now.getHours() * 60 + now.getMinutes()) * (HOUR_HEIGHT / 60);
+        const totalMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
+        const top = totalMinutes * (HOUR_HEIGHT / 60);
         timeLineHtml = `<div id="currentTimeLine" class="current-time-line" style="top: ${top}px;"></div>`;
     }
 

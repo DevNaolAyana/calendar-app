@@ -2082,4 +2082,27 @@ body.dark-mode .qnav-link.qnav-active {
         border-radius: 10px;
     }
 }
-
+
+/* Current Time Indicator Line (v2.4.0) */
+.current-time-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e74c3c;
+    z-index: 100;
+    pointer-events: none;
+    transition: top 0.3s ease;
+}
+
+.current-time-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background: #e74c3c;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+}
