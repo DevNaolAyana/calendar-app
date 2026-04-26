@@ -2083,26 +2083,32 @@ body.dark-mode .qnav-link.qnav-active {
     }
 }
 
-/* Current Time Indicator Line (v2.4.0) */
-.current-time-line {
+/* Current Time Indicator - Vertical Progress Bar (v2.4.1) */
+.time-progress-track {
     position: absolute;
     left: 0;
-    right: 0;
-    height: 2px;
-    background: #e74c3c;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.05);
     z-index: 100;
     pointer-events: none;
-    transition: top 0.3s ease;
+    border-radius: 0 4px 4px 0;
 }
 
-.current-time-line::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: -4px;
-    width: 10px;
-    height: 10px;
-    background: #e74c3c;
-    border-radius: 50%;
-    box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+body.dark-mode .time-progress-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.time-progress-fill {
+    width: 100%;
+    background: linear-gradient(to bottom, #e74c3c, #c0392b);
+    height: 0%; /* Updated via JS */
+    transition: height 0.5s ease;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.3);
+}
+
+body.dark-mode .time-progress-fill {
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
 }

@@ -101,14 +101,14 @@ function updateDateTimeDisplay() {
         display.innerHTML = `<i class="fas fa-clock"></i> ${formatted} (GMT+3)`;
     }
 
-    // Update current time indicator line in Daily View if today
+    // Update current time indicator (Vertical Progress Bar v2.4.1)
     if (formatDate(now) === formatDate(currentDate)) {
-        const indicator = document.getElementById('currentTimeLine');
-        if (indicator) {
-            // Precise position including seconds for smooth movement
+        const fill = document.getElementById('timeProgressFill');
+        if (fill) {
+            // Percentage of the day passed (0-100%)
             const totalMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
-            const top = totalMinutes * (HOUR_HEIGHT / 60);
-            indicator.style.top = `${top}px`;
+            const percentage = (totalMinutes / 1440) * 100;
+            fill.style.height = `${percentage}%`;
         }
     }
 }
@@ -444,14 +444,17 @@ function renderDayView(date) {
 
     const now = new Date();
     const todayStr = formatDate(now);
-    let timeLineHtml = '';
+    let progressHtml = '';
     if (dateStr === todayStr) {
         const totalMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
-        const top = totalMinutes * (HOUR_HEIGHT / 60);
-        timeLineHtml = `<div id="currentTimeLine" class="current-time-line" style="top: ${top}px;"></div>`;
+        const percentage = (totalMinutes / 1440) * 100;
+        progressHtml = `
+            <div class="time-progress-track">
+                <div id="timeProgressFill" class="time-progress-fill" style="height: ${percentage}%;"></div>
+            </div>`;
     }
 
-    container.innerHTML = `<div class="day-timeline-wrapper">${slotsHtml}${timeLineHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
+    container.innerHTML = `<div class="day-timeline-wrapper">${progressHtml}${slotsHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
 
     // Bind checkbox events
     container.querySelectorAll('.task-checkbox-right').forEach(cb => {
@@ -1248,10 +1251,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Highlight "Daily View" by default on load
     setActiveNavLink('section-daily');
 
-    // Register Service Worker for PWA
+    // Register Service Worker for PWA (with auto-update v2.4.1)
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('Service Worker registered', reg))
+            .then(reg => {
+                console.log('Service Worker registered', reg);
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload();
+                        }
+                    });
+                });
+            })
             .catch(err => console.error('Service Worker registration failed', err));
     }
 });
