@@ -99,6 +99,15 @@ function updateDateTimeDisplay() {
     if (display) {
         display.innerHTML = `<i class="fas fa-clock"></i> ${formatted} (GMT+3)`;
     }
+
+    // Update current time indicator line in Daily View if today
+    if (formatDate(now) === formatDate(currentDate)) {
+        const indicator = document.getElementById('currentTimeLine');
+        if (indicator) {
+            const top = (now.getHours() * 60 + now.getMinutes()) * (60 / 60); // 60px per hour
+            indicator.style.top = `${top}px`;
+        }
+    }
 }
 
 // Start clock update
@@ -432,7 +441,15 @@ function renderDayView(date) {
         return `<div class="task-block-overlay${isPast ? ' past' : ''}${inlineClass}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${metaHtml}</span></div><span class="task-block-duration">${durDisplay}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
     }).join('');
 
-    container.innerHTML = `<div class="day-timeline-wrapper">${slotsHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
+    const now = new Date();
+    const todayStr = formatDate(now);
+    let timeLineHtml = '';
+    if (dateStr === todayStr) {
+        const top = (now.getHours() * 60 + now.getMinutes()) * (HOUR_HEIGHT / 60);
+        timeLineHtml = `<div id="currentTimeLine" class="current-time-line" style="top: ${top}px;"></div>`;
+    }
+
+    container.innerHTML = `<div class="day-timeline-wrapper">${slotsHtml}${timeLineHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
 
     // Bind checkbox events
     container.querySelectorAll('.task-checkbox-right').forEach(cb => {
@@ -682,14 +699,49 @@ async function openAddTaskModal(date, startTime) {
     document.getElementById('taskForm').reset();
     // Enforce minimum date = today (no tasks in the past)
     document.getElementById('taskDate').min = formatDate(new Date());
+    
+    const todayStr = formatDate(new Date());
+    const targetDate = date || todayStr;
+    
     if (date) document.getElementById('taskDate').value = date;
-    if (startTime) document.getElementById('taskStartTime').value = startTime;
+    
+    // Feature 1: Auto-start time based on current time for TODAY
+    if (targetDate === todayStr) {
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        document.getElementById('taskStartTime').value = currentTime;
+    } else if (startTime) {
+        document.getElementById('taskStartTime').value = startTime;
+    }
+
+    // Feature 2: Auto end time (start time + 1 minute)
+    if (document.getElementById('taskStartTime').value) {
+        updateEndTimeFromStart();
+    }
+
     document.getElementById('taskModal').style.display = 'block';
     document.getElementById('isRecurring').checked = false;
     document.getElementById('recurringType').style.display = 'none';
     document.getElementById('deleteFromModalBtn').style.display = 'none';
     delete document.getElementById('taskModal').dataset.editId;
     delete document.getElementById('taskModal').dataset.isEdit;
+}
+
+// Helper: Update end time to start time + 1 minute
+function updateEndTimeFromStart() {
+    const startVal = document.getElementById('taskStartTime').value;
+    if (!startVal) return;
+    
+    let [h, m] = startVal.split(':').map(Number);
+    m += 1;
+    if (m >= 60) {
+        m = 0;
+        h += 1;
+    }
+    if (h >= 24) h = 0;
+    
+    const endVal = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    document.getElementById('taskEndTime').value = endVal;
 }
 
 async function editTask(id) {
@@ -1098,6 +1150,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('isRecurring').addEventListener('change', (e) => {
         document.getElementById('recurringType').style.display = e.target.checked ? 'block' : 'none';
     });
+
+    // Feature 2: Auto end time listener
+    document.getElementById('taskStartTime').addEventListener('input', updateEndTimeFromStart);
 
     // Check auth with persistence flag
     const isAuthenticated = localStorage.getItem('isAuthenticated');
