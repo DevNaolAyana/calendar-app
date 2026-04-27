@@ -230,8 +230,11 @@ function renderDueDates() {
 
     let all = [];
     for (const g of todoGroups) {
+        const groupFirstWord = g.name.split(' ')[0];
         for (const l of (todoListsCache[g._id] || [])) {
-            all = all.concat((todoTasksCache[l._id] || []).filter(t => !t.completed));
+            const tasks = (todoTasksCache[l._id] || []).filter(t => !t.completed);
+            tasks.forEach(t => t.groupNameFirst = groupFirstWord);
+            all = all.concat(tasks);
         }
     }
     all.sort((a,b) => a.dueDate.localeCompare(b.dueDate));
@@ -251,7 +254,8 @@ function renderDueDates() {
         <div class="due-date-title">${t.isImportant?'<i class="fas fa-star" style="color:#f39c12;font-size:10px;"></i> ':''}${_esc(t.title)}</div>
         <div class="due-date-meta">
           <span class="${ov?'overdue-text':''}">${ov?'<i class="fas fa-exclamation-triangle"></i>':'<i class="fas fa-calendar-day"></i>'} ${_fmt(t.dueDate)}</span>
-          ${t.duration?`<span><i class="fas fa-hourglass-half"></i> ${_esc(t.duration)}</span>`:''}
+          ${t.duration?`<span> · <i class="fas fa-hourglass-half"></i> ${_esc(t.duration)}</span>`:''}
+          <span> · ${_esc(t.groupNameFirst)}</span>
         </div>
       </div>
     </div>`;

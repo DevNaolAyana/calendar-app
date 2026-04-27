@@ -1505,6 +1505,7 @@ body.dark-mode .stat-chart-container {
     color: white;
     border-radius: 20px;
     padding: 2px 8px;
+    flex-shrink: 0;
 }
 
 .todo-count-badge {
@@ -1514,6 +1515,11 @@ body.dark-mode .stat-chart-container {
     border-radius: 20px;
     padding: 2px 8px;
     font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* ── Due Date items ──────────────────────────────────────────── */
@@ -1631,6 +1637,7 @@ body.dark-mode .todo-group-header {
 }
 
 .todo-group-name {
+    flex: 1;
     font-weight: 700;
     font-size: 14px;
     color: #333;
@@ -1671,6 +1678,7 @@ body.dark-mode .todo-list-header {
 }
 
 .todo-list-name {
+    flex: 1;
     font-weight: 600;
     font-size: 13px;
     color: #444;
@@ -1952,14 +1960,9 @@ body.dark-mode .todo-list-header {
 
     .todo-list-panel,
     .due-dates-panel {
-        flex: 0 0 100%;
-        width: 100%;
-        max-height: none;
-        position: static;
-    }
-
-    .todo-list-panel {
-        max-height: 400px;
+        max-height: 300px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .todo-task-card {

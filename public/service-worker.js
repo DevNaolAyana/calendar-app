@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calendar-app-v2.4.1';
+const CACHE_NAME = 'calendar-app-v2.5.1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
+  self.clients.claim();
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
