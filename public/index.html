@@ -195,7 +195,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.4.0 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.5.0 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -270,6 +270,16 @@
                 <div class="input-group">
                     <i class="fas fa-sticky-note"></i>
                     <textarea id="reminderNotes" placeholder="Notes"></textarea>
+                </div>
+                <div class="recurring-options">
+                    <label>
+                        <input type="checkbox" id="isRecurringReminder"> <i class="fas fa-repeat"></i> Recurring
+                    </label>
+                    <select id="recurringTypeReminder" style="display:none;">
+                        <option value="daily"><i class="fas fa-calendar-day"></i> Daily</option>
+                        <option value="weekly"><i class="fas fa-calendar-week"></i> Weekly</option>
+                        <option value="monthly"><i class="fas fa-calendar-alt"></i> Monthly</option>
+                    </select>
                 </div>
                 <button type="submit"><i class="fas fa-save"></i> Save Reminder</button>
             </form>

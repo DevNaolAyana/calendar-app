@@ -910,6 +910,8 @@ async function deleteTaskById(id) {
 async function openAddReminderModal() {
     document.getElementById('reminderForm').reset();
     document.getElementById('reminderDate').min = formatDate(new Date());
+    document.getElementById('isRecurringReminder').checked = false;
+    document.getElementById('recurringTypeReminder').style.display = 'none';
     document.getElementById('reminderModal').style.display = 'block';
     delete document.getElementById('reminderModal').dataset.editId;
 }
@@ -922,6 +924,15 @@ async function editReminder(id) {
     document.getElementById('reminderDate').value = reminder.date;
     document.getElementById('reminderTime').value = reminder.time;
     document.getElementById('reminderNotes').value = reminder.notes || '';
+    
+    document.getElementById('isRecurringReminder').checked = reminder.isRecurring || false;
+    if (reminder.isRecurring) {
+        document.getElementById('recurringTypeReminder').style.display = 'block';
+        document.getElementById('recurringTypeReminder').value = reminder.recurringType;
+    } else {
+        document.getElementById('recurringTypeReminder').style.display = 'none';
+    }
+
     document.getElementById('reminderModal').dataset.editId = id;
     document.getElementById('reminderModal').style.display = 'block';
 }
@@ -931,26 +942,68 @@ async function saveReminder() {
         title: document.getElementById('reminderTitle').value,
         date: document.getElementById('reminderDate').value,
         time: document.getElementById('reminderTime').value,
-        notes: document.getElementById('reminderNotes').value
+        notes: document.getElementById('reminderNotes').value,
+        isRecurring: document.getElementById('isRecurringReminder').checked,
+        recurringType: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringTypeReminder').value : null
     };
 
     // Block saving reminders in the past
     const editId = document.getElementById('reminderModal').dataset.editId;
-    if (!editId && isReminderPast(reminderData)) {
+    if (!editId && !reminderData.isRecurring && isReminderPast(reminderData)) {
         showNotification('⚠️ Cannot schedule a reminder in the past!', 'warning');
         return;
     }
 
     try {
-        const editId = document.getElementById('reminderModal').dataset.editId;
         if (editId) {
             await API.updateReminder(editId, reminderData);
             reminders = await API.getReminders();
             showNotification('Reminder updated!', 'success');
         } else {
-            await API.createReminder(reminderData);
+            const remindersToCreate = [reminderData];
+            if (reminderData.isRecurring && reminderData.recurringType) {
+                const baseDate = new Date(reminderData.date + 'T12:00:00');
+                if (reminderData.recurringType === 'daily') {
+                    // Until end of week (Sunday)
+                    const baseDay = baseDate.getDay(); 
+                    if (baseDay !== 0) {
+                        const daysLeft = 7 - baseDay;
+                        for (let i = 1; i <= daysLeft; i++) {
+                            const nextDate = new Date(baseDate);
+                            nextDate.setDate(baseDate.getDate() + i);
+                            remindersToCreate.push({ ...reminderData, date: formatDate(nextDate) });
+                        }
+                    }
+                } else if (reminderData.recurringType === 'weekly') {
+                    // Until end of month
+                    const currentMonth = baseDate.getMonth();
+                    for (let i = 1; i <= 5; i++) {
+                        const nextDate = new Date(baseDate);
+                        nextDate.setDate(baseDate.getDate() + (i * 7));
+                        if (nextDate.getMonth() === currentMonth) {
+                            remindersToCreate.push({ ...reminderData, date: formatDate(nextDate) });
+                        } else {
+                            break;
+                        }
+                    }
+                } else if (reminderData.recurringType === 'monthly') {
+                    // Until end of year
+                    const currentYear = baseDate.getFullYear();
+                    for (let i = 1; i <= 11; i++) {
+                        const nextDate = new Date(baseDate);
+                        nextDate.setMonth(baseDate.getMonth() + i);
+                        if (nextDate.getFullYear() === currentYear) {
+                            remindersToCreate.push({ ...reminderData, date: formatDate(nextDate) });
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            await Promise.all(remindersToCreate.map(r => API.createReminder(r)));
             reminders = await API.getReminders();
-            showNotification('Reminder created!', 'success');
+            showNotification(`Reminder${remindersToCreate.length > 1 ? 's' : ''} created!`, 'success');
         }
         closeModals();
         renderRemindersTable();
@@ -1154,6 +1207,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Recurring checkbox
     document.getElementById('isRecurring').addEventListener('change', (e) => {
         document.getElementById('recurringType').style.display = e.target.checked ? 'block' : 'none';
+    });
+    document.getElementById('isRecurringReminder').addEventListener('change', (e) => {
+        document.getElementById('recurringTypeReminder').style.display = e.target.checked ? 'block' : 'none';
     });
 
     // Feature 2: Auto end time listener

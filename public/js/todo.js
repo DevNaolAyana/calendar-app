@@ -14,6 +14,15 @@ let _currentGroupId = null; // for add-list modal
 window.todoSearchQuery = '';
 window.todoCategoryFilter = 'All';
 
+// Session persistence for expanded/collapsed states
+const _expandedGroups = new Set(JSON.parse(sessionStorage.getItem('todoExpandedGroups') || '[]'));
+const _expandedLists  = new Set(JSON.parse(sessionStorage.getItem('todoExpandedLists')  || '[]'));
+
+function _saveExpandedState() {
+    sessionStorage.setItem('todoExpandedGroups', JSON.stringify([..._expandedGroups]));
+    sessionStorage.setItem('todoExpandedLists',  JSON.stringify([..._expandedLists]));
+}
+
 // ─── API ────────────────────────────────────────────────────────
 const TodoAPI = {
     async req(url, opts = {}) {
@@ -93,12 +102,14 @@ function renderTodoGroups() {
         
         if ((window.todoSearchQuery || window.todoCategoryFilter !== 'All') && !listsHtml) continue;
         
+        const isExpanded = _expandedGroups.has(g._id);
+        
         html += `
     <div class="todo-group" data-group-id="${g._id}">
       <div class="todo-group-header">
         <div class="todo-group-title-row">
           <button class="todo-collapse-btn" onclick="todoToggleGroup('${g._id}')">
-            <i class="fas fa-chevron-down" id="g-icon-${g._id}"></i>
+            <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="g-icon-${g._id}"></i>
           </button>
           <i class="fas fa-folder todo-folder-icon"></i>
           <span class="todo-group-name">${_esc(g.name)}</span>
@@ -109,7 +120,7 @@ function renderTodoGroups() {
           <button class="todo-icon-btn todo-btn-del" onclick="deleteGroup('${g._id}')" title="Delete Group"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      <div class="todo-group-body" id="g-body-${g._id}">
+      <div class="todo-group-body" id="g-body-${g._id}" style="display: ${isExpanded ? 'block' : 'none'}">
         ${listsHtml || `<div class="todo-no-items"><i class="fas fa-list"></i> No matching lists.</div>`}
       </div>
     </div>`;
@@ -130,12 +141,14 @@ function renderListsHtml(gid) {
         
         if ((window.todoSearchQuery || window.todoCategoryFilter !== 'All') && !tasksHtml) continue;
         
+        const isExpanded = _expandedLists.has(l._id);
+
         html += `
     <div class="todo-list-item" data-list-id="${l._id}">
       <div class="todo-list-header">
         <div class="todo-list-title-row">
           <button class="todo-collapse-btn" onclick="todoToggleList('${l._id}')">
-            <i class="fas fa-chevron-down" id="l-icon-${l._id}"></i>
+            <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="l-icon-${l._id}"></i>
           </button>
           <i class="fas fa-list-ul todo-list-icon"></i>
           <span class="todo-list-name">${_esc(l.name)}</span>
@@ -146,7 +159,7 @@ function renderListsHtml(gid) {
           <button class="todo-icon-btn todo-btn-del" onclick="deleteTodoList('${l._id}')" title="Delete List"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      <div class="todo-list-body" id="l-body-${l._id}">
+      <div class="todo-list-body" id="l-body-${l._id}" style="display: ${isExpanded ? 'block' : 'none'}">
         ${tasksHtml || `<div class="todo-no-items"><i class="fas fa-check-circle"></i> No matching tasks.</div>`}
       </div>
     </div>`;
@@ -254,6 +267,10 @@ function todoToggleGroup(gid) {
     const hidden = body.style.display === 'none';
     body.style.display = hidden ? '' : 'none';
     icon.className = `fas fa-chevron-${hidden ? 'down' : 'right'}`;
+    
+    if (hidden) _expandedGroups.add(gid);
+    else _expandedGroups.delete(gid);
+    _saveExpandedState();
 }
 function todoToggleList(lid) {
     const body = document.getElementById(`l-body-${lid}`);
@@ -262,6 +279,10 @@ function todoToggleList(lid) {
     const hidden = body.style.display === 'none';
     body.style.display = hidden ? '' : 'none';
     icon.className = `fas fa-chevron-${hidden ? 'down' : 'right'}`;
+
+    if (hidden) _expandedLists.add(lid);
+    else _expandedLists.delete(lid);
+    _saveExpandedState();
 }
 window.todoToggleGroup = todoToggleGroup;
 window.todoToggleList  = todoToggleList;

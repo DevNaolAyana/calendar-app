@@ -68,7 +68,7 @@ body.dark-mode .auth-box {
 
 .auth-box h2 {
     margin-bottom: 20px;
-    color: #667eea;
+    color: white;
 }
 
 .auth-tabs {
@@ -144,12 +144,12 @@ body.dark-mode .auth-box {
 }
 
 .app-header h1 i {
-    color: #667eea;
+    color: white;
     margin-right: 10px;
 }
 
 .app-header h1 i {
-    color: #667eea;
+    color: white;
 }
 
 .dark-mode-btn,
@@ -381,7 +381,7 @@ body.dark-mode .week-day {
 }
 
 .week-day.today .week-day-header {
-    color: #667eea;
+    color: white;
 }
 
 .week-task {
@@ -462,7 +462,7 @@ body.dark-mode .month-day-header {
     color: white;
     padding: 3px 6px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 11px;
     margin: 2px 0;
     overflow: hidden;
     white-space: nowrap;
@@ -486,7 +486,7 @@ body.dark-mode .month-day-header {
 
 .reminders-header h3 i {
     margin-right: 8px;
-    color: #667eea;
+    color: white;
 }
 
 .add-btn {
@@ -747,7 +747,7 @@ body.dark-mode .modal-content {
 
 .modal-content h3 {
     margin-bottom: 20px;
-    color: #667eea;
+    color: white;
 }
 
 .modal-content h3 i {
@@ -929,7 +929,7 @@ body.dark-mode .modal-content {
     }
 
     .date-time-display {
-        font-size: 10px;
+        font-size: 11px;
     }
 
     .view-header h2 {
@@ -944,7 +944,7 @@ body.dark-mode .modal-content {
     /* Day View on Mobile */
     .hour-label {
         width: 50px;
-        font-size: 10px;
+        font-size: 11px;
         padding: 5px;
     }
 
@@ -953,7 +953,7 @@ body.dark-mode .modal-content {
     }
 
     .task-title {
-        font-size: 10px;
+        font-size: 11px;
     }
 
     .task-time {
@@ -978,7 +978,7 @@ body.dark-mode .modal-content {
     /* Month View on Mobile */
     .month-day {
         min-height: 55px;
-        font-size: 10px;
+        font-size: 11px;
         padding: 3px;
     }
 
@@ -993,7 +993,7 @@ body.dark-mode .modal-content {
 
     /* Reminders Table on Mobile */
     .reminders-table {
-        font-size: 10px;
+        font-size: 11px;
         display: block;
         overflow-x: auto;
         white-space: nowrap;
@@ -1094,7 +1094,7 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 /* Date Time Display */
 .date-time-display {
     font-size: 14px;
-    color: #667eea;
+    color: white;
     margin-top: 5px;
 }
 
@@ -1129,7 +1129,7 @@ body.dark-mode .date-time-display {
     border-radius: 3px;
     cursor: pointer;
     padding: 2px 5px;
-    font-size: 10px;
+    font-size: 11px;
     margin-top: 4px;
     width: 100%;
 }
@@ -1151,7 +1151,7 @@ body.dark-mode .date-time-display {
 .week-task.empty {
     opacity: 0.5;
     text-align: center;
-    font-size: 10px;
+    font-size: 11px;
     background: #999;
 }
 
@@ -1251,7 +1251,7 @@ body.dark-mode .todo-section-title-group h2 {
 }
 
 .todo-section-title-group h2 i {
-    color: #667eea;
+    color: white;
     margin-right: 8px;
 }
 
@@ -1373,7 +1373,7 @@ body.dark-mode .cat-filter:hover {
 .cat-filter.active {
     background: #667eea;
     color: white;
-    border-color: #667eea;
+    border-color: white;
 }
 
 /* ── Category Dots ─────────────────────────────────────────── */
@@ -1400,7 +1400,7 @@ body.dark-mode .cat-filter:hover {
 
 .stats-header h3 {
     font-size: 14px;
-    color: #667eea;
+    color: white;
     margin: 0;
 }
 
@@ -1491,7 +1491,7 @@ body.dark-mode .stat-chart-container {
 
 .due-dates-header h3 {
     font-size: 14px;
-    color: #667eea;
+    color: white;
     margin: 0;
 }
 
@@ -1505,6 +1505,15 @@ body.dark-mode .stat-chart-container {
     color: white;
     border-radius: 20px;
     padding: 2px 8px;
+}
+
+.todo-count-badge {
+    font-size: 11px;
+    background: #667eea;
+    color: white;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-weight: 600;
 }
 
 /* ── Due Date items ──────────────────────────────────────────── */
@@ -1767,7 +1776,7 @@ body.dark-mode .todo-task-title { color: #eee; }
 
 body.dark-mode .tmeta { color: #aaa; }
 
-.tmeta.imp-time { color: #667eea; font-weight: 600; }
+.tmeta.imp-time { color: white; font-weight: 600; }
 .tmeta.overdue-text,
 span.overdue-text { color: #e74c3c !important; }
 .tmeta.overdue-warn { color: #e74c3c; font-weight: 600; }
@@ -1841,11 +1850,11 @@ body.dark-mode .todo-btn-edit:hover { background: #0a2a4a; }
 
 /* ── Count badge ─────────────────────────────────────────────── */
 .todo-count-badge {
-    font-size: 10px;
-    background: #667eea22;
-    color: #667eea;
+    font-size: 11px;
+    background: #667eea;
+    color: white;
     border-radius: 20px;
-    padding: 1px 7px;
+    padding: 2px 8px;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -1912,7 +1921,7 @@ body.dark-mode .todo-important-toggle {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    accent-color: #667eea;
+    accent-color: white;
     flex-shrink: 0;
     margin-top: 2px;
 }
@@ -1921,7 +1930,7 @@ body.dark-mode .todo-important-toggle {
 .app-version {
     text-align: center;
     font-size: 12px;
-    color: #667eea;
+    color: white;
     opacity: 0.6;
     padding: 18px 0 6px;
     letter-spacing: 0.5px;
@@ -2025,14 +2034,14 @@ body.dark-mode .qnav-link {
 
 .qnav-link i {
     font-size: 12px;
-    color: #667eea;
+    color: white;
     transition: color 0.2s;
 }
 
 /* Hover */
 .qnav-link:hover {
     background: #667eea15;
-    color: #667eea;
+    color: white;
     border-color: #667eea40;
     transform: translateY(-1px);
     box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
