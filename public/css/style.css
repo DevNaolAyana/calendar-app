@@ -312,7 +312,59 @@ body.dark-mode .hour-label {
 .task-block-overlay.past {
     opacity: 0.5;
     background: linear-gradient(135deg, #999, #666);
+    filter: grayscale(0.5);
 }
+
+.task-block-overlay.overdue {
+    border: 2px solid #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.task-block-overlay.overdue .task-block-title {
+    color: #e74c3c;
+}
+
+.pending-badge {
+    background: #f39c12;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 5px;
+    text-transform: uppercase;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.header-badges {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+    margin-bottom: 5px;
+}
+
+.badge-pill {
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+body.dark-mode .badge-pill {
+    background: #1e293b;
+    color: #cbd5e1;
+    border-color: #334155;
+}
+
 
 .task-block-inner {
     display: flex;

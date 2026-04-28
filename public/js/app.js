@@ -42,14 +42,30 @@ function calculateDuration(startTime, endTime) {
     return `${hours} hr ${minutes} min`;
 }
 
-// Helper: Check if task has passed based on date and time
-function isTaskPast(dateStr, startTime) {
-    if (!dateStr || !startTime) return false;
+// Helper: Check if task end time has passed
+function isTaskPast(dateStr, endTime) {
+    if (!dateStr || !endTime) return false;
     let [year, month, day] = dateStr.split('-');
-    let [hours, minutes] = startTime.split(':');
-    let taskTime = new Date(year, month - 1, day, hours, minutes);
+    let hoursVal = endTime === '24:00' ? '23' : endTime.split(':')[0];
+    let minutesVal = endTime === '24:00' ? '59' : endTime.split(':')[1];
+    let taskTime = new Date(year, month - 1, day, hoursVal, minutesVal);
+    if (endTime === '24:00') taskTime.setSeconds(59);
     return taskTime < new Date();
 }
+
+// Helper: Check if task is currently ongoing (started but not ended)
+function isTaskOngoing(dateStr, startTime, endTime) {
+    if (!dateStr || !startTime || !endTime) return false;
+    let [year, month, day] = dateStr.split('-');
+    let start = new Date(year, month - 1, day, startTime.split(':')[0], startTime.split(':')[1]);
+    let hoursVal = endTime === '24:00' ? '23' : endTime.split(':')[0];
+    let minutesVal = endTime === '24:00' ? '59' : endTime.split(':')[1];
+    let end = new Date(year, month - 1, day, hoursVal, minutesVal);
+    if (endTime === '24:00') end.setSeconds(59);
+    let now = new Date();
+    return now >= start && now <= end;
+}
+
 
 // Helper: Check if a reminder has passed
 function isReminderPast(r) {
@@ -380,8 +396,25 @@ function renderDayView(date) {
         }
     }
 
+    // FIX 2: Header Badges calculation
+    const totalTasks = renderingTasks.length;
+    const completedTasks = renderingTasks.filter(t => t.completed).length;
+
     const container = document.getElementById('dayView');
-    document.getElementById('dayTitle').innerText = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const dayTitleEl = document.getElementById('dayTitle');
+    dayTitleEl.innerText = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Inject Badges
+    let badgesHtml = `
+        <div class="header-badges">
+            <span class="badge-pill">📋 ${totalTasks} task${totalTasks !== 1 ? 's' : ''}</span>
+            <span class="badge-pill">✅ ${completedTasks} completed</span>
+        </div>`;
+    
+    // Remove existing badges if any and re-append
+    const existingBadges = dayTitleEl.parentElement.querySelector('.header-badges');
+    if (existingBadges) existingBadges.remove();
+    dayTitleEl.insertAdjacentHTML('afterend', badgesHtml);
 
     // Build hour grid background
     let slotsHtml = '';
@@ -390,8 +423,31 @@ function renderDayView(date) {
         slotsHtml += `<div class="hour-slot" onclick="openAddTaskModal('${dateStr}', '${hour.toString().padStart(2, '0')}:00')"><div class="hour-label">${hourLabel}</div><div class="hour-content"></div></div>`;
     }
 
-    // Assign columns to overlapping tasks
-    const sorted = renderingTasks.sort((a, b) => a.renderStart.localeCompare(b.renderStart));
+    // FIX 3: Smart Sorting
+    // Priority order:
+    // 1. Unchecked + Past (overdue)
+    // 2. Unchecked + Ongoing (pending)
+    // 3. Checked + Ongoing
+    // 4. Unchecked + Future
+    // 5. Checked + Past
+    const getPriority = (t) => {
+        const past = isTaskPast(dateStr, t.renderEnd);
+        const ongoing = isTaskOngoing(dateStr, t.renderStart, t.renderEnd);
+        if (!t.completed && past) return 1;
+        if (!t.completed && ongoing) return 2;
+        if (t.completed && ongoing) return 3;
+        if (!t.completed && !past && !ongoing) return 4;
+        return 5;
+    };
+
+    const sorted = renderingTasks.sort((a, b) => {
+        const pA = getPriority(a);
+        const pB = getPriority(b);
+        if (pA !== pB) return pA - pB;
+        return a.renderStart.localeCompare(b.renderStart);
+    });
+
+    // Assign columns to overlapping tasks (for visual layout)
     const colEnds = [];
     const taskCol = new Map();
     for (const t of sorted) {
@@ -404,7 +460,7 @@ function renderDayView(date) {
     const numCols = Math.max(1, colEnds.length);
 
     // Build task overlay blocks
-    const tasksHtml = sorted.map(t => {
+    const tasksHtml = sorted.map((t, index) => {
         const [sh, sm] = t.renderStart.split(':').map(Number);
         const startMin = sh * 60 + (sm || 0);
         let endMin;
@@ -420,18 +476,23 @@ function renderDayView(date) {
         const height = Math.max(calcHeight, 28);
         const col    = taskCol.get(t._id) || 0;
         const pct    = 100 / numCols;
-        const isPast = isTaskPast(dateStr, t.startTime);
+        
+        // FIX 1 & 4: Logic updates
+        const isPast = isTaskPast(dateStr, t.renderEnd);
+        const isOngoing = isTaskOngoing(dateStr, t.renderStart, t.renderEnd);
+        const isOverdue = !t.completed && isPast;
+        
         const inlineClass = calcHeight <= 35 ? ' inline-layout' : '';
+        const overdueClass = isOverdue ? ' overdue' : '';
+        const pastClass = (isPast && t.completed) || (isPast && !isOverdue) ? ' past' : ''; // Fading logic
 
         // For overflow tasks, show the VISIBLE portion's time range and duration
         let metaHtml;
         let durDisplay;
         if (t.isOverflowStart) {
-            // Spill from yesterday: visible from 12:00 AM to endTime on this day
             metaHtml = `12:00 AM – ${formatTime(t.renderEnd)} <span style="opacity:0.75;font-size:10px">(↑ from yesterday)</span>`;
             durDisplay = calculateDuration('00:00', t.renderEnd);
         } else if (t.isOverflowEnd) {
-            // Spill into tomorrow: visible from startTime to midnight on this day
             metaHtml = `${formatTime(t.startTime)} – midnight <span style="opacity:0.75;font-size:10px">(↓ cont. tomorrow)</span>`;
             durDisplay = calculateDuration(t.startTime, '00:00') || calculateDuration(t.startTime, t.endTime);
         } else {
@@ -439,7 +500,24 @@ function renderDayView(date) {
             durDisplay = calculateDuration(t.startTime, t.endTime);
         }
 
-        return `<div class="task-block-overlay${isPast ? ' past' : ''}${inlineClass}" style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" onclick="event.stopPropagation();editTask('${t._id}')"><div class="task-block-inner"><div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;"><span class="task-block-title">${escapeHtml(t.title)}</span><span class="task-block-meta">${metaHtml}</span></div><span class="task-block-duration">${durDisplay}</span></div><input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()"></div>`;
+        const cautionIcon = isOverdue ? '<i class="fas fa-exclamation-triangle" style="color: #e74c3c; margin-right: 5px;"></i>' : '';
+        const pendingLabel = (!t.completed && isOngoing) ? '<span class="pending-badge">Pending</span>' : '';
+
+        return `<div class="task-block-overlay${pastClass}${overdueClass}${inlineClass}" 
+                     id="task-${t._id}"
+                     style="top:${top}px;height:${height}px;left:calc(${col * pct}% + 2px);width:calc(${pct}% - 4px);" 
+                     onclick="event.stopPropagation();editTask('${t._id}')">
+                    <div class="task-block-inner">
+                        <div style="display: flex; gap: 5px; align-items: baseline; flex-wrap: wrap;">
+                            ${cautionIcon}
+                            <span class="task-block-title">${escapeHtml(t.title)}</span>
+                            ${pendingLabel}
+                            <span class="task-block-meta">${metaHtml}</span>
+                        </div>
+                        <span class="task-block-duration">${durDisplay}</span>
+                    </div>
+                    <input type="checkbox" class="task-checkbox-right" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()">
+                </div>`;
     }).join('');
 
     const now = new Date();
@@ -456,6 +534,17 @@ function renderDayView(date) {
 
     container.innerHTML = `<div class="day-timeline-wrapper">${progressHtml}${slotsHtml}<div class="day-tasks-overlay">${tasksHtml}</div></div>`;
 
+    // FIX 3: Auto-scroll to first task
+    if (sorted.length > 0) {
+        setTimeout(() => {
+            const firstTaskEl = document.getElementById(`task-${sorted[0]._id}`);
+            if (firstTaskEl && container) {
+                const topPos = firstTaskEl.offsetTop;
+                container.scrollTo({ top: Math.max(0, topPos - 50), behavior: 'smooth' });
+            }
+        }, 100);
+    }
+
     // Bind checkbox events
     container.querySelectorAll('.task-checkbox-right').forEach(cb => {
         cb.addEventListener('change', (e) => {
@@ -464,6 +553,7 @@ function renderDayView(date) {
         });
     });
 }
+
 
 
 
