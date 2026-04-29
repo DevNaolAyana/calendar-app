@@ -743,7 +743,7 @@ function renderReminders() {
             </div>
             <div class="reminder-actions">
                 <button class="edit-btn icon-only" onclick="editReminder('${r._id}')" title="Edit"><i class="fas fa-edit"></i></button>
-                <button class="snooze-btn icon-only" onclick="openSnoozeModal('${r._id}')" title="Snooze"><i class="fas fa-bed"></i></button>
+                <button class="snooze-btn icon-only" onclick="openSnoozeModal('${r._id}')" title="Snooze"><i class="fas fa-clock"></i></button>
             </div>
         </div>`;
     }).join('');

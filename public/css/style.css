@@ -602,6 +602,51 @@ body.dark-mode .reminder-card {
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
+.reminder-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.reminder-actions .edit-btn,
+.reminder-actions .snooze-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.reminder-actions .edit-btn {
+    color: #3498db;
+}
+
+.reminder-actions .edit-btn:hover {
+    background: #eaf4fb;
+    transform: scale(1.1);
+}
+
+.reminder-actions .snooze-btn {
+    color: #e67e22;
+}
+
+.reminder-actions .snooze-btn:hover {
+    background: #fdf2e9;
+    transform: scale(1.1);
+}
+
+body.dark-mode .reminder-actions .edit-btn:hover {
+    background: #0a2a4a;
+}
+
+body.dark-mode .reminder-actions .snooze-btn:hover {
+    background: #3d2310;
+}
+
 .reminder-checkbox {
     width: 18px;
     height: 18px;
