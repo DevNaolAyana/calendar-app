@@ -7,6 +7,7 @@ let reminders = [];
 let notificationCheckInterval = null;
 let clockInterval = null;
 let currentEditingTaskId = null;
+let remindersViewMode = 'active'; // 'active' or 'history'
 
 // Helper: Format date as YYYY-MM-DD
 function formatDate(date) {
@@ -276,7 +277,7 @@ async function loadAllData() {
     tasks = await API.getTasks();
     reminders = await API.getReminders();
     renderAllViews();
-    renderRemindersTable();
+    renderReminders();
     checkAndNotifyReminders();
     // Load todo system
     if (window.loadTodoData) await window.loadTodoData();
@@ -688,26 +689,89 @@ function renderAllViews() {
     tasks = savedTasks;
 }
 
-// Render Reminders Table
-function renderRemindersTable() {
-    const tbody = document.querySelector('#remindersTable tbody');
-    tbody.innerHTML = reminders.map(r => {
+// Render Reminders Cards v2.7.0
+function renderReminders() {
+    const list = document.getElementById('remindersList');
+    if (!list) return;
+
+    // Sort reminders: closest first
+    const sorted = [...reminders].sort((a, b) => {
+        const tA = new Date(`${a.date}T${a.time || '00:00'}:00`);
+        const tB = new Date(`${b.date}T${b.time || '00:00'}:00`);
+        return tA - tB;
+    });
+
+    // Filter based on view mode
+    let displayReminders = [];
+    if (remindersViewMode === 'active') {
+        displayReminders = sorted.filter(r => !r.completed);
+    } else {
+        // History: finished, edited (handled as updated), snoozed (time changed), passed
+        // For simplicity, we'll show completed and passed unchecked reminders
+        displayReminders = sorted.filter(r => r.completed || isReminderPast(r));
+    }
+
+    list.innerHTML = displayReminders.map(r => {
         const past = isReminderPast(r);
         const countdown = formatReminderCountdown(r);
         const dateDisplay = new Date(r.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        
+        const isHistoryItem = r.completed || (remindersViewMode === 'history' && past);
+        const historyClass = isHistoryItem ? ' history' : '';
+        const pastClass = past ? ' past' : '';
+        const missedAlert = (!r.completed && past) ? '<div class="reminder-missed-alert"><i class="fas fa-exclamation-triangle"></i> ⚠️ Missed</div>' : '';
+
         return `
-        <tr class="${past ? 'reminder-past' : ''}">
-            <td>${escapeHtml(r.title)}</td>
-            <td><div class="reminder-date-disp">${dateDisplay}</div><div>${countdown}</div></td>
-            <td>${formatTime(r.time)}</td>
-            <td class="reminder-notes-cell">${escapeHtml(r.notes || '')}</td>
-            <td class="reminder-actions">
+        <div class="reminder-card${pastClass}${historyClass}">
+            <input type="checkbox" class="reminder-checkbox" data-id="${r._id}" ${r.completed ? 'checked' : ''} title="Mark as finished">
+            <div class="reminder-details">
+                <div class="reminder-title">${escapeHtml(r.title)}</div>
+                <div class="reminder-meta">
+                    <span><i class="fas fa-calendar-day"></i> ${dateDisplay}</span>
+                    <span><i class="fas fa-clock"></i> ${formatTime(r.time)}</span>
+                    ${countdown}
+                </div>
+                ${missedAlert}
+                ${r.notes ? `<div class="reminder-notes-preview">${escapeHtml(r.notes)}</div>` : ''}
+            </div>
+            <div class="reminder-actions">
                 <button class="edit-btn icon-only" onclick="editReminder('${r._id}')" title="Edit"><i class="fas fa-edit"></i></button>
                 <button class="snooze-btn icon-only" onclick="openSnoozeModal('${r._id}')" title="Snooze"><i class="fas fa-bed"></i></button>
-                <button class="delete-btn icon-only" onclick="deleteReminderById('${r._id}')" title="Delete"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>`;
+            </div>
+        </div>`;
     }).join('');
+
+    if (displayReminders.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:20px; opacity:0.5;">No ${remindersViewMode} reminders</div>`;
+    }
+
+    // Bind checkboxes
+    list.querySelectorAll('.reminder-checkbox').forEach(cb => {
+        cb.addEventListener('change', async (e) => {
+            e.stopPropagation();
+            const id = cb.getAttribute('data-id');
+            await toggleReminderComplete(id, cb.checked);
+        });
+    });
+}
+
+async function toggleReminderComplete(id, isCompleted) {
+    try {
+        await API.updateReminder(id, { completed: isCompleted });
+        reminders = await API.getReminders();
+        renderReminders();
+        showNotification(isCompleted ? 'Reminder finished! ✓' : 'Reminder restored', 'success');
+    } catch (err) {
+        showNotification('Failed to update reminder', 'error');
+    }
+}
+
+function toggleRemindersView() {
+    remindersViewMode = remindersViewMode === 'active' ? 'history' : 'active';
+    const btn = document.getElementById('toggleRemindersHistory');
+    btn.classList.toggle('active');
+    btn.innerHTML = remindersViewMode === 'active' ? '<i class="fas fa-history"></i> History' : '<i class="fas fa-bell"></i> Active';
+    renderReminders();
 }
 
 // Check and Notify Reminders
@@ -784,7 +848,7 @@ function startNotificationChecker() {
     if (notificationCheckInterval) clearInterval(notificationCheckInterval);
     notificationCheckInterval = setInterval(() => {
         checkAndNotifyReminders();
-        renderRemindersTable(); // refresh countdown timers
+        renderReminders(); // refresh countdown timers
     }, 60000);
 }
 
@@ -817,6 +881,9 @@ async function openAddTaskModal(date, startTime) {
     document.getElementById('taskModal').style.display = 'block';
     document.getElementById('isRecurring').checked = false;
     document.getElementById('recurringType').style.display = 'none';
+    document.getElementById('recurringEndOptions').style.display = 'none';
+    document.getElementById('recurringEndDate').value = '';
+    document.getElementById('recurringOccurrences').value = '';
     document.getElementById('deleteFromModalBtn').style.display = 'none';
     delete document.getElementById('taskModal').dataset.editId;
     delete document.getElementById('taskModal').dataset.isEdit;
@@ -856,6 +923,11 @@ async function editTask(id) {
     if (task.isRecurring) {
         document.getElementById('recurringType').style.display = 'block';
         document.getElementById('recurringType').value = task.recurringType;
+        document.getElementById('recurringEndOptions').style.display = 'block';
+        document.getElementById('recurringEndDate').value = task.recurringEndDate || '';
+        document.getElementById('recurringOccurrences').value = task.recurringOccurrences || '';
+    } else {
+        document.getElementById('recurringEndOptions').style.display = 'none';
     }
     document.getElementById('deleteFromModalBtn').style.display = 'block';
     document.getElementById('taskModal').dataset.editId = id;
@@ -872,7 +944,9 @@ async function saveTask() {
         startTime: document.getElementById('taskStartTime').value,
         endTime: document.getElementById('taskEndTime').value,
         isRecurring: document.getElementById('isRecurring').checked,
-        recurringType: document.getElementById('isRecurring').checked ? document.getElementById('recurringType').value : null
+        recurringType: document.getElementById('isRecurring').checked ? document.getElementById('recurringType').value : null,
+        recurringEndDate: document.getElementById('isRecurring').checked ? document.getElementById('recurringEndDate').value : null,
+        recurringOccurrences: document.getElementById('isRecurring').checked ? document.getElementById('recurringOccurrences').value : null
     };
 
     // Block setting backward UNLESS overnight
@@ -929,42 +1003,38 @@ async function saveTask() {
         } else {
             const tasksToCreate = [taskData];
             if (taskData.isRecurring && taskData.recurringType) {
-                const baseDate = new Date(taskData.date);
-                if (taskData.recurringType === 'daily') {
-                    // Until end of week (Sunday). Week is Mon-Sun
-                    const baseDay = baseDate.getDay(); // 0 is Sunday
-                    if (baseDay !== 0) {
-                        const daysLeft = 7 - baseDay; // Mon=1 -> 6 days left
-                        for (let i = 1; i <= daysLeft; i++) {
-                            const nextDate = new Date(baseDate);
-                            nextDate.setDate(baseDate.getDate() + i);
-                            tasksToCreate.push({ ...taskData, date: formatDate(nextDate) });
-                        }
+                const baseDate = new Date(taskData.date + 'T12:00:00');
+                const endDateVal = document.getElementById('recurringEndDate').value;
+                const occurrencesVal = parseInt(document.getElementById('recurringOccurrences').value);
+                
+                let count = 1;
+                let currentDateLoop = new Date(baseDate);
+                
+                // Max iterations to prevent infinite loops (safety)
+                const MAX_ITER = 365; 
+
+                while (count < MAX_ITER) {
+                    if (occurrencesVal && count >= occurrencesVal) break;
+                    
+                    if (taskData.recurringType === 'daily') {
+                        currentDateLoop.setDate(currentDateLoop.getDate() + 1);
+                    } else if (taskData.recurringType === 'weekly') {
+                        currentDateLoop.setDate(currentDateLoop.getDate() + 7);
+                    } else if (taskData.recurringType === 'monthly') {
+                        currentDateLoop.setMonth(currentDateLoop.getMonth() + 1);
                     }
-                } else if (taskData.recurringType === 'weekly') {
-                    // Until end of month
-                    const currentMonth = baseDate.getMonth();
-                    for (let i = 1; i <= 5; i++) {
-                        const nextDate = new Date(baseDate);
-                        nextDate.setDate(baseDate.getDate() + (i * 7));
-                        if (nextDate.getMonth() === currentMonth) {
-                            tasksToCreate.push({ ...taskData, date: formatDate(nextDate) });
-                        } else {
-                            break;
-                        }
+
+                    if (endDateVal && currentDateLoop > new Date(endDateVal + 'T23:59:59')) break;
+                    
+                    // If no end condition specified, use old defaults
+                    if (!endDateVal && !occurrencesVal) {
+                        if (taskData.recurringType === 'daily' && currentDateLoop.getDay() === 1) break; // End of week
+                        if (taskData.recurringType === 'weekly' && currentDateLoop.getMonth() !== baseDate.getMonth()) break; // End of month
+                        if (taskData.recurringType === 'monthly' && currentDateLoop.getFullYear() !== baseDate.getFullYear()) break; // End of year
                     }
-                } else if (taskData.recurringType === 'monthly') {
-                    // Until end of year
-                    const currentYear = baseDate.getFullYear();
-                    for (let i = 1; i <= 11; i++) {
-                        const nextDate = new Date(baseDate);
-                        nextDate.setMonth(baseDate.getMonth() + i);
-                        if (nextDate.getFullYear() === currentYear) {
-                            tasksToCreate.push({ ...taskData, date: formatDate(nextDate) });
-                        } else {
-                            break;
-                        }
-                    }
+
+                    tasksToCreate.push({ ...taskData, date: formatDate(currentDateLoop) });
+                    count++;
                 }
             }
             
@@ -1002,6 +1072,10 @@ async function openAddReminderModal() {
     document.getElementById('reminderDate').min = formatDate(new Date());
     document.getElementById('isRecurringReminder').checked = false;
     document.getElementById('recurringTypeReminder').style.display = 'none';
+    document.getElementById('recurringEndOptionsReminder').style.display = 'none';
+    document.getElementById('recurringEndDateReminder').value = '';
+    document.getElementById('recurringOccurrencesReminder').value = '';
+    document.getElementById('deleteReminderFromModalBtn').style.display = 'none';
     document.getElementById('reminderModal').style.display = 'block';
     delete document.getElementById('reminderModal').dataset.editId;
 }
@@ -1019,10 +1093,15 @@ async function editReminder(id) {
     if (reminder.isRecurring) {
         document.getElementById('recurringTypeReminder').style.display = 'block';
         document.getElementById('recurringTypeReminder').value = reminder.recurringType;
+        document.getElementById('recurringEndOptionsReminder').style.display = 'block';
+        document.getElementById('recurringEndDateReminder').value = reminder.recurringEndDate || '';
+        document.getElementById('recurringOccurrencesReminder').value = reminder.recurringOccurrences || '';
     } else {
         document.getElementById('recurringTypeReminder').style.display = 'none';
+        document.getElementById('recurringEndOptionsReminder').style.display = 'none';
     }
 
+    document.getElementById('deleteReminderFromModalBtn').style.display = 'block';
     document.getElementById('reminderModal').dataset.editId = id;
     document.getElementById('reminderModal').style.display = 'block';
 }
@@ -1034,7 +1113,9 @@ async function saveReminder() {
         time: document.getElementById('reminderTime').value,
         notes: document.getElementById('reminderNotes').value,
         isRecurring: document.getElementById('isRecurringReminder').checked,
-        recurringType: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringTypeReminder').value : null
+        recurringType: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringTypeReminder').value : null,
+        recurringEndDate: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringEndDateReminder').value : null,
+        recurringOccurrences: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringOccurrencesReminder').value : null
     };
 
     // Block saving reminders in the past
@@ -1053,41 +1134,34 @@ async function saveReminder() {
             const remindersToCreate = [reminderData];
             if (reminderData.isRecurring && reminderData.recurringType) {
                 const baseDate = new Date(reminderData.date + 'T12:00:00');
-                if (reminderData.recurringType === 'daily') {
-                    // Until end of week (Sunday)
-                    const baseDay = baseDate.getDay(); 
-                    if (baseDay !== 0) {
-                        const daysLeft = 7 - baseDay;
-                        for (let i = 1; i <= daysLeft; i++) {
-                            const nextDate = new Date(baseDate);
-                            nextDate.setDate(baseDate.getDate() + i);
-                            remindersToCreate.push({ ...reminderData, date: formatDate(nextDate) });
-                        }
+                const endDateVal = document.getElementById('recurringEndDateReminder').value;
+                const occurrencesVal = parseInt(document.getElementById('recurringOccurrencesReminder').value);
+                
+                let count = 1;
+                let currentDateLoop = new Date(baseDate);
+                const MAX_ITER = 365;
+
+                while (count < MAX_ITER) {
+                    if (occurrencesVal && count >= occurrencesVal) break;
+                    
+                    if (reminderData.recurringType === 'daily') {
+                        currentDateLoop.setDate(currentDateLoop.getDate() + 1);
+                    } else if (reminderData.recurringType === 'weekly') {
+                        currentDateLoop.setDate(currentDateLoop.getDate() + 7);
+                    } else if (reminderData.recurringType === 'monthly') {
+                        currentDateLoop.setMonth(currentDateLoop.getMonth() + 1);
                     }
-                } else if (reminderData.recurringType === 'weekly') {
-                    // Until end of month
-                    const currentMonth = baseDate.getMonth();
-                    for (let i = 1; i <= 5; i++) {
-                        const nextDate = new Date(baseDate);
-                        nextDate.setDate(baseDate.getDate() + (i * 7));
-                        if (nextDate.getMonth() === currentMonth) {
-                            remindersToCreate.push({ ...reminderData, date: formatDate(nextDate) });
-                        } else {
-                            break;
-                        }
+
+                    if (endDateVal && currentDateLoop > new Date(endDateVal + 'T23:59:59')) break;
+                    
+                    if (!endDateVal && !occurrencesVal) {
+                        if (reminderData.recurringType === 'daily' && currentDateLoop.getDay() === 1) break;
+                        if (reminderData.recurringType === 'weekly' && currentDateLoop.getMonth() !== baseDate.getMonth()) break;
+                        if (reminderData.recurringType === 'monthly' && currentDateLoop.getFullYear() !== baseDate.getFullYear()) break;
                     }
-                } else if (reminderData.recurringType === 'monthly') {
-                    // Until end of year
-                    const currentYear = baseDate.getFullYear();
-                    for (let i = 1; i <= 11; i++) {
-                        const nextDate = new Date(baseDate);
-                        nextDate.setMonth(baseDate.getMonth() + i);
-                        if (nextDate.getFullYear() === currentYear) {
-                            remindersToCreate.push({ ...reminderData, date: formatDate(nextDate) });
-                        } else {
-                            break;
-                        }
-                    }
+
+                    remindersToCreate.push({ ...reminderData, date: formatDate(currentDateLoop) });
+                    count++;
                 }
             }
             
@@ -1096,7 +1170,7 @@ async function saveReminder() {
             showNotification(`Reminder${remindersToCreate.length > 1 ? 's' : ''} created!`, 'success');
         }
         closeModals();
-        renderRemindersTable();
+        renderReminders();
     } catch (err) {
         showNotification(err.message, 'error');
     }
@@ -1106,7 +1180,7 @@ async function deleteReminderById(id) {
     if (!confirm('Delete this reminder?')) return;
     await API.deleteReminder(id);
     reminders = await API.getReminders();
-    renderRemindersTable();
+    renderReminders();
     showNotification('Reminder deleted', 'success');
 }
 
@@ -1144,7 +1218,7 @@ async function saveSnooze() {
         reminders = await API.getReminders();
         showNotification(`Reminder snoozed for ${hours} hour(s)!`, 'success');
         closeModals();
-        renderRemindersTable();
+        renderReminders();
     } catch (err) {
         showNotification(err.message, 'error');
     }
@@ -1277,6 +1351,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Modals
     document.getElementById('addReminderBtn').addEventListener('click', openAddReminderModal);
+    document.getElementById('toggleRemindersHistory').addEventListener('click', toggleRemindersView);
     document.getElementById('taskForm').addEventListener('submit', (e) => { e.preventDefault(); saveTask(); });
     document.getElementById('reminderForm').addEventListener('submit', (e) => { e.preventDefault(); saveReminder(); });
     document.getElementById('snoozeForm').addEventListener('submit', (e) => { e.preventDefault(); saveSnooze(); });
@@ -1284,6 +1359,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const editId = document.getElementById('taskModal').dataset.editId;
         if (editId) {
             deleteTaskById(editId);
+            closeModals();
+        }
+    });
+    document.getElementById('deleteReminderFromModalBtn').addEventListener('click', () => {
+        const editId = document.getElementById('reminderModal').dataset.editId;
+        if (editId) {
+            deleteReminderById(editId);
             closeModals();
         }
     });
@@ -1296,10 +1378,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Recurring checkbox
     document.getElementById('isRecurring').addEventListener('change', (e) => {
-        document.getElementById('recurringType').style.display = e.target.checked ? 'block' : 'none';
+        const isChecked = e.target.checked;
+        document.getElementById('recurringType').style.display = isChecked ? 'block' : 'none';
+        document.getElementById('recurringEndOptions').style.display = isChecked ? 'block' : 'none';
     });
     document.getElementById('isRecurringReminder').addEventListener('change', (e) => {
-        document.getElementById('recurringTypeReminder').style.display = e.target.checked ? 'block' : 'none';
+        const isChecked = e.target.checked;
+        document.getElementById('recurringTypeReminder').style.display = isChecked ? 'block' : 'none';
+        document.getElementById('recurringEndOptionsReminder').style.display = isChecked ? 'block' : 'none';
     });
 
     // Feature 2: Auto end time listener
@@ -1340,6 +1426,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.deleteReminderById = deleteReminderById;
     window.openAddTaskModal = openAddTaskModal;
     window.toggleTaskComplete = toggleTaskComplete;
+    window.openSnoozeModal = openSnoozeModal;
+    window.acknowledgePassedReminder = acknowledgePassedReminder;
+    window.renderReminders = renderReminders;
+    window.toggleRemindersView = toggleRemindersView;
+    window.toggleReminderComplete = toggleReminderComplete;
     window.openSnoozeModal = openSnoozeModal;
     window.acknowledgePassedReminder = acknowledgePassedReminder;
 

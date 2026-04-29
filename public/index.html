@@ -103,24 +103,20 @@
                 <div id="dayView" class="day-view-container"></div>
             </div>
 
-            <!-- Reminders Table -->
+            <!-- Reminders Section (v2.7.0 Card Style) -->
             <div class="reminders-section" id="section-reminders">
                 <div class="reminders-header">
-                    <h3><i class="fas fa-bell"></i> Reminders</h3>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h3><i class="fas fa-bell"></i> Reminders</h3>
+                        <button id="toggleRemindersHistory" class="history-toggle-btn" title="View History"><i class="fas fa-history"></i> History</button>
+                    </div>
                     <button id="addReminderBtn" class="add-btn"><i class="fas fa-plus"></i> Add Reminder</button>
                 </div>
-                <table id="remindersTable" class="reminders-table">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-tag"></i> <span class="header-text">Title</span></th>
-                            <th><i class="fas fa-calendar-day"></i> <span class="header-text">Date</span></th>
-                            <th><i class="fas fa-clock"></i> <span class="header-text">Time</span></th>
-                            <th><i class="fas fa-sticky-note"></i> <span class="header-text">Notes</span></th>
-                            <th><i class="fas fa-cogs"></i> <span class="header-text">Actions</span></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div id="remindersListContainer" class="reminders-list-container">
+                    <div id="remindersList" class="reminders-list">
+                        <!-- Reminders rendered here as cards -->
+                    </div>
+                </div>
             </div>
 
         </div><!-- end daily-reminders-row -->
@@ -195,7 +191,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.6.0 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.0 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -240,6 +236,14 @@
                         <option value="weekly"><i class="fas fa-calendar-week"></i> Weekly</option>
                         <option value="monthly"><i class="fas fa-calendar-alt"></i> Monthly</option>
                     </select>
+                    <div id="recurringEndOptions" style="display:none; margin-top: 10px;">
+                        <div style="display: flex; gap: 10px; align-items: center; font-size: 13px;">
+                            <span>End date:</span>
+                            <input type="date" id="recurringEndDate" style="flex: 1; padding: 5px;">
+                            <span>OR Count:</span>
+                            <input type="number" id="recurringOccurrences" placeholder="e.g. 10" style="width: 70px; padding: 5px;">
+                        </div>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button type="submit" style="flex: 2;"><i class="fas fa-save"></i> Save Task</button>
@@ -280,8 +284,20 @@
                         <option value="weekly"><i class="fas fa-calendar-week"></i> Weekly</option>
                         <option value="monthly"><i class="fas fa-calendar-alt"></i> Monthly</option>
                     </select>
+                    <div id="recurringEndOptionsReminder" style="display:none; margin-top: 10px;">
+                        <div style="display: flex; gap: 10px; align-items: center; font-size: 13px;">
+                            <span>End date:</span>
+                            <input type="date" id="recurringEndDateReminder" style="flex: 1; padding: 5px;">
+                            <span>OR Count:</span>
+                            <input type="number" id="recurringOccurrencesReminder" placeholder="e.g. 5" style="width: 70px; padding: 5px;">
+                        </div>
+                    </div>
                 </div>
-                <button type="submit"><i class="fas fa-save"></i> Save Reminder</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="submit" style="flex: 2;"><i class="fas fa-save"></i> Save Reminder</button>
+                    <button type="button" id="deleteReminderFromModalBtn" class="delete-modal-btn"
+                        style="flex: 1; display:none; background: #e74c3c;"><i class="fas fa-trash"></i> Delete</button>
+                </div>
             </form>
         </div>
     </div>

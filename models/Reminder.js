@@ -19,6 +19,10 @@ const reminderSchema = new mongoose.Schema({
         required: true
     },
     notes: String,
+    completed: { type: Boolean, default: false },
+    isRecurring: { type: Boolean, default: false },
+    recurringType: { type: String, enum: ['daily', 'weekly', 'monthly', null], default: null },
+    isAcknowledgedPassed: { type: Boolean, default: false },
     isNotified3Days: { type: Boolean, default: false },
     isNotified6Hours: { type: Boolean, default: false },
     isNotified2Hours: { type: Boolean, default: false },
