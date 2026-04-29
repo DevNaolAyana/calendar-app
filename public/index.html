@@ -112,6 +112,12 @@
                     </div>
                     <button id="addReminderBtn" class="add-btn"><i class="fas fa-plus"></i> Add Reminder</button>
                 </div>
+                <!-- Fix 1: Reminder Filters -->
+                <div class="reminder-filters" id="reminderFilters" style="display: flex; gap: 8px; margin-bottom: 15px;">
+                    <button class="rem-filter active" data-cat="All">All</button>
+                    <button class="rem-filter" data-cat="Study">Study</button>
+                    <button class="rem-filter" data-cat="Personal">Personal</button>
+                </div>
                 <div id="remindersListContainer" class="reminders-list-container">
                     <div id="remindersList" class="reminders-list">
                         <!-- Reminders rendered here as cards -->
@@ -130,15 +136,18 @@
                     <h2><i class="fas fa-tasks"></i> Todo Productivity</h2>
                     <span class="todo-subtitle">Groups &rarr; Lists &rarr; Tasks</span>
                 </div>
-                <button id="addGroupBtn" class="add-btn"><i class="fas fa-folder-plus"></i> New Group</button>
             </div>
             <div class="todo-layout">
                 <!-- Left: Todo List (50%) -->
                 <div class="todo-list-panel">
                     <div class="todo-controls">
-                        <div class="search-container">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="todoSearchInput" placeholder="Search tasks by title...">
+                        <!-- Fix 2: Move New Group button beside search bar -->
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <div class="search-container" style="flex: 1; margin-bottom: 0;">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="todoSearchInput" placeholder="Search tasks by title...">
+                            </div>
+                            <button id="addGroupBtn" class="add-btn"><i class="fas fa-folder-plus"></i> New Group</button>
                         </div>
                         <div class="category-filters" id="todoCategoryFilters">
                             <button class="cat-filter active" data-cat="All">All</button>
@@ -191,7 +200,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.0 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.1 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -274,6 +283,14 @@
                 <div class="input-group">
                     <i class="fas fa-sticky-note"></i>
                     <textarea id="reminderNotes" placeholder="Notes"></textarea>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-tag"></i>
+                    <select id="reminderCategory">
+                        <option value="">None</option>
+                        <option value="Study">Study</option>
+                        <option value="Personal">Personal</option>
+                    </select>
                 </div>
                 <div class="recurring-options">
                     <label>

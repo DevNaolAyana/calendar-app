@@ -8,6 +8,7 @@ let notificationCheckInterval = null;
 let clockInterval = null;
 let currentEditingTaskId = null;
 let remindersViewMode = 'active'; // 'active' or 'history'
+let remindersFilter = 'All'; 
 
 // Helper: Format date as YYYY-MM-DD
 function formatDate(date) {
@@ -711,6 +712,11 @@ function renderReminders() {
         displayReminders = sorted.filter(r => r.completed || isReminderPast(r));
     }
 
+    // Filter based on category
+    if (remindersFilter !== 'All') {
+        displayReminders = displayReminders.filter(r => r.category === remindersFilter);
+    }
+
     list.innerHTML = displayReminders.map(r => {
         const past = isReminderPast(r);
         const countdown = formatReminderCountdown(r);
@@ -720,12 +726,13 @@ function renderReminders() {
         const historyClass = isHistoryItem ? ' history' : '';
         const pastClass = past ? ' past' : '';
         const missedAlert = (!r.completed && past) ? '<div class="reminder-missed-alert"><i class="fas fa-exclamation-triangle"></i> ⚠️ Missed</div>' : '';
+        const categoryLabel = r.category ? `<span class="reminder-category-label" style="font-size:10px; background:#667eea; color:white; padding:1px 6px; border-radius:10px; margin-left:8px;">${r.category}</span>` : '';
 
         return `
         <div class="reminder-card${pastClass}${historyClass}">
             <input type="checkbox" class="reminder-checkbox" data-id="${r._id}" ${r.completed ? 'checked' : ''} title="Mark as finished">
             <div class="reminder-details">
-                <div class="reminder-title">${escapeHtml(r.title)}</div>
+                <div class="reminder-title">${escapeHtml(r.title)}${categoryLabel}</div>
                 <div class="reminder-meta">
                     <span><i class="fas fa-calendar-day"></i> ${dateDisplay}</span>
                     <span><i class="fas fa-clock"></i> ${formatTime(r.time)}</span>
@@ -1073,6 +1080,7 @@ async function openAddReminderModal() {
     document.getElementById('isRecurringReminder').checked = false;
     document.getElementById('recurringTypeReminder').style.display = 'none';
     document.getElementById('recurringEndOptionsReminder').style.display = 'none';
+    document.getElementById('reminderCategory').value = '';
     document.getElementById('recurringEndDateReminder').value = '';
     document.getElementById('recurringOccurrencesReminder').value = '';
     document.getElementById('deleteReminderFromModalBtn').style.display = 'none';
@@ -1088,6 +1096,7 @@ async function editReminder(id) {
     document.getElementById('reminderDate').value = reminder.date;
     document.getElementById('reminderTime').value = reminder.time;
     document.getElementById('reminderNotes').value = reminder.notes || '';
+    document.getElementById('reminderCategory').value = reminder.category || '';
     
     document.getElementById('isRecurringReminder').checked = reminder.isRecurring || false;
     if (reminder.isRecurring) {
@@ -1112,6 +1121,7 @@ async function saveReminder() {
         date: document.getElementById('reminderDate').value,
         time: document.getElementById('reminderTime').value,
         notes: document.getElementById('reminderNotes').value,
+        category: document.getElementById('reminderCategory').value || null,
         isRecurring: document.getElementById('isRecurringReminder').checked,
         recurringType: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringTypeReminder').value : null,
         recurringEndDate: document.getElementById('isRecurringReminder').checked ? document.getElementById('recurringEndDateReminder').value : null,
@@ -1372,6 +1382,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.close').forEach(close => {
         close.addEventListener('click', closeModals);
     });
+    // Reminder Filters
+    document.querySelectorAll('.rem-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.rem-filter').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            remindersFilter = btn.dataset.cat;
+            renderReminders();
+        });
+    });
+
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) closeModals();
     });

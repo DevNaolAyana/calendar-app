@@ -19,6 +19,7 @@ const reminderSchema = new mongoose.Schema({
         required: true
     },
     notes: String,
+    category: { type: String, enum: ['Study', 'Personal', null], default: null },
     completed: { type: Boolean, default: false },
     isRecurring: { type: Boolean, default: false },
     recurringType: { type: String, enum: ['daily', 'weekly', 'monthly', null], default: null },
