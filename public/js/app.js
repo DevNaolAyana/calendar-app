@@ -707,9 +707,16 @@ function renderReminders() {
     if (remindersViewMode === 'active') {
         displayReminders = sorted.filter(r => !r.completed);
     } else {
-        // History: finished, edited (handled as updated), snoozed (time changed), passed
-        // For simplicity, we'll show completed and passed unchecked reminders
+        // History: finished or passed
         displayReminders = sorted.filter(r => r.completed || isReminderPast(r));
+    }
+
+    // Update view toggle buttons UI
+    const activeBtn = document.getElementById('remindersViewActive');
+    const historyBtn = document.getElementById('remindersViewHistory');
+    if (activeBtn && historyBtn) {
+        activeBtn.classList.toggle('active', remindersViewMode === 'active');
+        historyBtn.classList.toggle('active', remindersViewMode === 'history');
     }
 
     // Filter based on category
@@ -727,14 +734,16 @@ function renderReminders() {
         const pastClass = past ? ' past' : '';
         const missedAlert = (!r.completed && past) ? '<div class="reminder-missed-alert"><i class="fas fa-exclamation-triangle"></i> ⚠️ Missed</div>' : '';
         const categoryLabel = r.category ? `<span class="reminder-category-label" style="font-size:10px; background:#667eea; color:white; padding:1px 6px; border-radius:10px; margin-left:8px;">${r.category}</span>` : '';
+        const snoozedBadge = r.snoozed ? `<span class="snoozed-badge"><i class="fas fa-bed"></i> Snoozed</span>` : '';
+        const snoozeIcon = r.snoozed ? `<i class="fas fa-history snoozed-icon" title="Snoozed"></i>` : '';
 
         return `
         <div class="reminder-card${pastClass}${historyClass}">
             <input type="checkbox" class="reminder-checkbox" data-id="${r._id}" ${r.completed ? 'checked' : ''} title="Mark as finished">
             <div class="reminder-details">
-                <div class="reminder-title">${escapeHtml(r.title)}${categoryLabel}</div>
+                <div class="reminder-title">${escapeHtml(r.title)}${categoryLabel}${snoozedBadge}</div>
                 <div class="reminder-meta">
-                    <span><i class="fas fa-calendar-day"></i> ${dateDisplay}</span>
+                    <span>${snoozeIcon}<i class="fas fa-calendar-day"></i> ${dateDisplay}</span>
                     <span><i class="fas fa-clock"></i> ${formatTime(r.time)}</span>
                     ${countdown}
                 </div>
@@ -773,11 +782,12 @@ async function toggleReminderComplete(id, isCompleted) {
     }
 }
 
-function toggleRemindersView() {
-    remindersViewMode = remindersViewMode === 'active' ? 'history' : 'active';
-    const btn = document.getElementById('toggleRemindersHistory');
-    btn.classList.toggle('active');
-    btn.innerHTML = remindersViewMode === 'active' ? '<i class="fas fa-history"></i> History' : '<i class="fas fa-bell"></i> Active';
+function toggleRemindersView(view) {
+    if (view) {
+        remindersViewMode = view;
+    } else {
+        remindersViewMode = remindersViewMode === 'active' ? 'history' : 'active';
+    }
     renderReminders();
 }
 
@@ -786,6 +796,7 @@ function checkAndNotifyReminders() {
     const now = new Date();
 
     reminders.forEach(async r => {
+        if (r.completed) return;
         const reminderDate = new Date(`${r.date}T${r.time || '00:00'}:00`);
         const diffMs = reminderDate - now;
         const diffMinutes = Math.floor(diffMs / 60000);
@@ -1203,30 +1214,40 @@ async function openSnoozeModal(id) {
 
 async function saveSnooze() {
     const id = document.getElementById('snoozeModal').dataset.snoozeId;
-    const hours = parseInt(document.getElementById('snoozeHours').value);
+    const amount = parseInt(document.getElementById('snoozeAmount').value);
+    const unit = document.getElementById('snoozeUnit').value;
     const reminder = reminders.find(r => r._id === id);
     if (!reminder) return;
 
-    // Add selected hours to the current time
-    const newTime = new Date();
-    newTime.setHours(newTime.getHours() + hours);
+    // Use current due date as base
+    const baseDate = new Date(`${reminder.date}T${reminder.time || '00:00'}:00`);
+    const newTime = new Date(baseDate);
+
+    switch (unit) {
+        case 'minutes': newTime.setMinutes(newTime.getMinutes() + amount); break;
+        case 'hours': newTime.setHours(newTime.getHours() + amount); break;
+        case 'days': newTime.setDate(newTime.getDate() + amount); break;
+        case 'weeks': newTime.setDate(newTime.getDate() + (amount * 7)); break;
+        case 'months': newTime.setMonth(newTime.getMonth() + amount); break;
+    }
 
     const reminderData = {
-        title: reminder.title,
-        notes: reminder.notes,
         date: formatDate(newTime),
         time: `${String(newTime.getHours()).padStart(2, '0')}:${String(newTime.getMinutes()).padStart(2, '0')}`,
+        snoozed: true,
         isNotifiedAtTime: false,
         isNotifiedAfter: false,
         isNotified2Hours: false,
+        isNotified4Hours: false,
         isNotified6Hours: false,
-        isNotified3Days: false
+        isNotified1Hour: false,
+        isAcknowledgedPassed: false
     };
 
     try {
         await API.updateReminder(id, reminderData);
         reminders = await API.getReminders();
-        showNotification(`Reminder snoozed for ${hours} hour(s)!`, 'success');
+        showNotification(`Reminder snoozed for ${amount} ${unit}!`, 'success');
         closeModals();
         renderReminders();
     } catch (err) {
@@ -1361,7 +1382,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Modals
     document.getElementById('addReminderBtn').addEventListener('click', openAddReminderModal);
-    document.getElementById('toggleRemindersHistory').addEventListener('click', toggleRemindersView);
+    document.getElementById('remindersViewActive').addEventListener('click', () => toggleRemindersView('active'));
+    document.getElementById('remindersViewHistory').addEventListener('click', () => toggleRemindersView('history'));
     document.getElementById('taskForm').addEventListener('submit', (e) => { e.preventDefault(); saveTask(); });
     document.getElementById('reminderForm').addEventListener('submit', (e) => { e.preventDefault(); saveReminder(); });
     document.getElementById('snoozeForm').addEventListener('submit', (e) => { e.preventDefault(); saveSnooze(); });

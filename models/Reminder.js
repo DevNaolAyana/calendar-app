@@ -29,6 +29,7 @@ const reminderSchema = new mongoose.Schema({
     isNotified2Hours: { type: Boolean, default: false },
     isNotifiedAtTime: { type: Boolean, default: false },
     isNotifiedAfter: { type: Boolean, default: false },
+    snoozed: { type: Boolean, default: false },
     createdAt: {
         type: Date,
         default: Date.now

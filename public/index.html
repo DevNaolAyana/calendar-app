@@ -108,7 +108,10 @@
                 <div class="reminders-header">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <h3><i class="fas fa-bell"></i> Reminders</h3>
-                        <button id="toggleRemindersHistory" class="history-toggle-btn" title="View History"><i class="fas fa-history"></i> History</button>
+                        <div class="reminder-view-toggle" style="display: flex; gap: 8px;">
+                            <button id="remindersViewActive" class="rem-view-btn active" data-view="active">Active</button>
+                            <button id="remindersViewHistory" class="rem-view-btn" data-view="history">History</button>
+                        </div>
                     </div>
                     <button id="addReminderBtn" class="add-btn"><i class="fas fa-plus"></i> Add Reminder</button>
                 </div>
@@ -200,7 +203,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.2 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.3 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -326,16 +329,23 @@
             <h3 style="margin-bottom: 10px;"><i class="fas fa-bed"></i> Snooze Reminder</h3>
             <p style="font-size: 14px; margin-bottom: 20px;">Remind me again in:</p>
             <form id="snoozeForm">
-                <div class="input-group">
-                    <i class="fas fa-hourglass-half"></i>
-                    <select id="snoozeHours" required>
-                        <option value="1">1 hour</option>
-                        <option value="2">2 hours</option>
-                        <option value="4">4 hours</option>
-                        <option value="6">6 hours</option>
-                    </select>
+                <div class="row">
+                    <div class="input-group half" style="margin: 0;">
+                        <i class="fas fa-sort-numeric-up"></i>
+                        <input type="number" id="snoozeAmount" value="1" min="1" required style="padding-left: 35px;">
+                    </div>
+                    <div class="input-group half" style="margin: 0;">
+                        <i class="fas fa-clock"></i>
+                        <select id="snoozeUnit" required style="padding-left: 35px;">
+                            <option value="minutes">Minutes</option>
+                            <option value="hours" selected>Hours</option>
+                            <option value="days">Days</option>
+                            <option value="weeks">Weeks</option>
+                            <option value="months">Months</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" style="background: #e67e22;"><i class="fas fa-check"></i> Snooze</button>
+                <button type="submit" style="background: #e67e22; margin-top: 15px;"><i class="fas fa-check"></i> Snooze</button>
             </form>
         </div>
     </div>
