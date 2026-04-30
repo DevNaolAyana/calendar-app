@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calendar-app-v2.5.1';
+const CACHE_NAME = 'calendar-app-v2.7.2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -16,14 +16,17 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  self.clients.claim();
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
+        cacheNames.map(name => {
+          if (name !== CACHE_NAME) {
+            console.log('Deleting old cache:', name);
+            return caches.delete(name);
+          }
+        })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 

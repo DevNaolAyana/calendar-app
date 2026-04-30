@@ -336,6 +336,15 @@ body.dark-mode .hour-label {
     text-transform: uppercase;
     display: inline-block;
     vertical-align: middle;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .pending-badge {
+        font-size: 9px;
+        padding: 1px 4px;
+        margin-left: 2px;
+    }
 }
 
 .header-badges {

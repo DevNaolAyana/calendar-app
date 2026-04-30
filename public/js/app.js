@@ -1510,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Register Service Worker for PWA (with auto-update v2.4.1)
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('/service-worker.js', { updateViaCache: 'none' })
             .then(reg => {
                 console.log('Service Worker registered', reg);
                 reg.addEventListener('updatefound', () => {
