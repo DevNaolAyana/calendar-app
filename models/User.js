@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
     lastActiveDate: {
         type: String,
         default: null
+    },
+    bestStreak: {
+        type: Number,
+        default: 0
     }
 });
 

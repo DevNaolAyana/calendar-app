@@ -34,8 +34,14 @@ const updateStreakOnCompletion = async (userId) => {
 
         if (user.lastActiveDate === yesterday) {
             user.currentStreak += 1;
+            if (user.currentStreak > user.bestStreak) {
+                user.bestStreak = user.currentStreak;
+            }
         } else {
             user.currentStreak = 1;
+            if (user.currentStreak > user.bestStreak) {
+                user.bestStreak = user.currentStreak;
+            }
         }
 
         user.lastActiveDate = today;

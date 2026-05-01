@@ -228,6 +228,14 @@ const API = {
 
     async getStreakData() {
         return this.request('/api/streak');
+    },
+
+    async getAnalyticsData() {
+        return this.request('/api/analytics');
+    },
+
+    async exportAnalyticsData() {
+        return this.request('/api/analytics/export');
     }
 };
 
@@ -323,6 +331,79 @@ async function updateStreakUI() {
     }
 }
 window.updateStreakUI = updateStreakUI;
+
+async function openAnalyticsDashboard() {
+    try {
+        const data = await API.getAnalyticsData();
+        if (!data) return;
+
+        document.getElementById('totalStudyTime').innerText = `${data.totalHours}h`;
+        document.getElementById('dailyAverage').innerText = `${data.dailyAverage}h`;
+        document.getElementById('bestStreak').innerText = `${data.bestStreak} days`;
+        document.getElementById('completionRate').innerText = `${data.completionRate}%`;
+
+        // Render Category Breakdown
+        const breakdown = document.getElementById('categoryBreakdown');
+        const maxHours = Math.max(...Object.values(data.categoryBreakdown), 1);
+        breakdown.innerHTML = Object.entries(data.categoryBreakdown).sort((a,b)=>b[1]-a[1]).map(([name, hours]) => `
+            <div class="category-item">
+                <div class="category-hdr">
+                    <span>${name}</span>
+                    <span>${hours.toFixed(1)}h</span>
+                </div>
+                <div class="category-bar-bg">
+                    <div class="category-bar-fill" style="width: ${(hours/maxHours)*100}%"></div>
+                </div>
+            </div>
+        `).join('') || '<div style="opacity:0.5; text-align:center;">No category data found</div>';
+
+        // Render Heatmap
+        const heatmap = document.getElementById('studyHeatmap');
+        heatmap.innerHTML = Object.entries(data.heatmap).map(([date, count]) => {
+            let opacity = 0;
+            if (count > 0) opacity = count >= 5 ? 1 : 0.2 + (count * 0.15);
+            return `<div class="streak-day-square active" style="opacity: ${opacity || 0}" title="${date}: ${count} tasks"></div>`;
+        }).join('');
+
+        document.getElementById('analyticsModal').style.display = 'block';
+    } catch (err) {
+        showNotification('Failed to load analytics', 'error');
+    }
+}
+
+async function exportStudyData() {
+    try {
+        const data = await API.exportAnalyticsData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `study_report_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('Report exported successfully!', 'success');
+    } catch (err) {
+        showNotification('Export failed', 'error');
+    }
+}
+
+// Bind Analytics Events
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('openAnalyticsBtn')?.addEventListener('click', openAnalyticsDashboard);
+    document.getElementById('exportDataBtn')?.addEventListener('click', exportStudyData);
+    
+    document.querySelector('.analytics-close')?.addEventListener('click', () => {
+        document.getElementById('analyticsModal').style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target.id === 'analyticsModal') {
+            document.getElementById('analyticsModal').style.display = 'none';
+        }
+    });
+});
 
 // Toggle task completion (handles both calendar tasks AND important todo tasks)
 async function toggleTaskComplete(taskId, isCompleted) {

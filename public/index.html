@@ -68,6 +68,7 @@
                         </div>
                     </div>
                     <div id="streakCalendar" class="streak-mini-calendar"></div>
+                    <button id="openAnalyticsBtn" class="analytics-toggle-btn" title="Study Analytics"><i class="fas fa-chart-bar"></i> Analytics</button>
                 </div>
                 <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-moon"></i> Dark</button>
                 <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -213,7 +214,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.4 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.5 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -442,6 +443,76 @@
                 </div>
                 <button type="submit"><i class="fas fa-plus"></i> Create List</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Analytics Modal -->
+    <div id="analyticsModal" class="modal">
+        <div class="modal-content analytics-modal-content">
+            <span class="close analytics-close">&times;</span>
+            <h2><i class="fas fa-chart-pie"></i> Study Analytics Dashboard</h2>
+            
+            <div class="analytics-grid">
+                <!-- Stats Cards -->
+                <div class="analytics-card stat-card">
+                    <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Study Time</span>
+                        <span id="totalStudyTime" class="stat-value">0.0h</span>
+                    </div>
+                </div>
+                <div class="analytics-card stat-card">
+                    <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Daily Average</span>
+                        <span id="dailyAverage" class="stat-value">0.0h</span>
+                    </div>
+                </div>
+                <div class="analytics-card stat-card">
+                    <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Best Streak</span>
+                        <span id="bestStreak" class="stat-value">0 days</span>
+                    </div>
+                </div>
+                <div class="analytics-card stat-card">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Completion Rate</span>
+                        <span id="completionRate" class="stat-value">0.0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-row">
+                <!-- Category Breakdown -->
+                <div class="analytics-card category-card">
+                    <h3><i class="fas fa-tags"></i> Category Breakdown (Hours)</h3>
+                    <div id="categoryBreakdown" class="category-list">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- 30 Day Heatmap -->
+                <div class="analytics-card heatmap-card">
+                    <h3><i class="fas fa-fire-alt"></i> 30-Day Study Heatmap</h3>
+                    <div id="studyHeatmap" class="heatmap-grid">
+                        <!-- 30 squares rendered via JS -->
+                    </div>
+                    <div class="heatmap-legend">
+                        <span>Less</span>
+                        <div class="streak-day-square"></div>
+                        <div class="streak-day-square active" style="opacity: 0.4"></div>
+                        <div class="streak-day-square active" style="opacity: 0.7"></div>
+                        <div class="streak-day-square active"></div>
+                        <span>More</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-footer">
+                <button id="exportDataBtn" class="export-btn"><i class="fas fa-file-export"></i> Export Study Report (JSON)</button>
+            </div>
         </div>
     </div>
 
