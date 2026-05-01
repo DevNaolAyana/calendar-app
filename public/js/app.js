@@ -1029,6 +1029,43 @@ async function openAddTaskModal(date, startTime) {
     delete document.getElementById('taskModal').dataset.isEdit;
 }
 
+async function openQuickAddTask() {
+    const now = new Date();
+    // Nearest 15-min or upcoming hour
+    let h = now.getHours();
+    let m = now.getMinutes();
+    
+    // Round to next 15 min
+    m = Math.ceil((m + 1) / 15) * 15;
+    if (m >= 60) {
+        m = 0;
+        h += 1;
+    }
+    if (h >= 24) h = 0;
+
+    const startTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    
+    // End time = start + 30 min
+    let eh = h;
+    let em = m + 30;
+    if (em >= 60) {
+        em -= 60;
+        eh += 1;
+    }
+    if (eh >= 24) eh = 0;
+    const endTime = `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+
+    const todayStr = formatDate(new Date());
+    
+    await openAddTaskModal(todayStr, startTime);
+    document.getElementById('taskEndTime').value = endTime;
+    
+    // Focus title
+    setTimeout(() => {
+        document.getElementById('taskTitle').focus();
+    }, 100);
+}
+
 // Helper: Update end time to start time + 1 minute
 function updateEndTimeFromStart() {
     const startVal = document.getElementById('taskStartTime').value;
@@ -1507,6 +1544,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('remindersViewActive').addEventListener('click', () => toggleRemindersView('active'));
     document.getElementById('remindersViewHistory').addEventListener('click', () => toggleRemindersView('history'));
     document.getElementById('taskForm').addEventListener('submit', (e) => { e.preventDefault(); saveTask(); });
+    document.getElementById('taskTitle').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.value.trim() !== '') {
+            e.preventDefault();
+            saveTask();
+        }
+    });
+    document.getElementById('quickAddBtn').addEventListener('click', openQuickAddTask);
     document.getElementById('reminderForm').addEventListener('submit', (e) => { e.preventDefault(); saveReminder(); });
     document.getElementById('snoozeForm').addEventListener('submit', (e) => { e.preventDefault(); saveSnooze(); });
     document.getElementById('deleteFromModalBtn').addEventListener('click', () => {

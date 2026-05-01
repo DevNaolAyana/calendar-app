@@ -399,6 +399,32 @@ body.dark-mode .category-bar-bg {
     transform: translateY(-2px);
 }
 
+.quick-add-task-btn {
+    background: #f1c40f;
+    color: #2c3e50;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quick-add-task-btn:hover {
+    background: #f39c12;
+    transform: scale(1.05);
+}
+
+.quick-add-task-btn i {
+    font-size: 10px;
+}
+
+
 
 
 .app-header h1 {
