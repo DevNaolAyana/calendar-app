@@ -410,12 +410,14 @@ async function saveTodoTask(e) {
     }
     closeTodoModals();
     await loadTodoData();
+    if (window.updateStreakUI) await window.updateStreakUI();
 }
 
 async function deleteTodoTask(id) {
     if (!confirm('Delete this task?')) return;
     await TodoAPI.deleteTask(id);
     await loadTodoData();
+    if (window.updateStreakUI) await window.updateStreakUI();
 }
 window.deleteTodoTask = deleteTodoTask;
 
@@ -434,6 +436,7 @@ async function toggleTodoTask(id, checked) {
     renderDueDates();
     renderStats();
     if (window.renderAllViews) window.renderAllViews();
+    if (window.updateStreakUI) await window.updateStreakUI();
 }
 window.toggleTodoTask = toggleTodoTask;
 

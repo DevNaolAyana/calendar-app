@@ -25,6 +25,7 @@ app.use('/api/auth',      require('./routes/authRoutes'));
 app.use('/api/tasks',     require('./routes/taskRoutes'));
 app.use('/api/reminders', require('./routes/reminderRoutes'));
 app.use('/api/todo',      require('./routes/todoRoutes'));
+app.use('/api/streak',    require('./routes/streakRoutes'));
 
 // Start server
 app.listen(PORT, () => {

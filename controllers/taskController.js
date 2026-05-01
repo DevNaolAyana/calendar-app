@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const { updateStreakOnCompletion } = require('./streakController');
 
 // Get all tasks for a user
 const getTasks = async (req, res) => {
@@ -51,7 +52,12 @@ const updateTask = async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
-        
+        if (updates.completed === true) {
+            updates.completedAt = new Date();
+        } else if (updates.completed === false) {
+            updates.completedAt = null;
+        }
+
         const task = await Task.findOneAndUpdate(
             { _id: id, userId: req.userId },
             updates,
@@ -60,6 +66,10 @@ const updateTask = async (req, res) => {
         
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
+        }
+
+        if (updates.completed === true) {
+            await updateStreakOnCompletion(req.userId);
         }
         
         res.json(task);

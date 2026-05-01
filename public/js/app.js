@@ -224,6 +224,10 @@ const API = {
 
     async deleteReminder(id) {
         return this.request(`/api/reminders/${id}`, { method: 'DELETE' });
+    },
+
+    async getStreakData() {
+        return this.request('/api/streak');
     }
 };
 
@@ -280,9 +284,45 @@ async function loadAllData() {
     renderAllViews();
     renderReminders();
     checkAndNotifyReminders();
+    // Load streak data
+    await updateStreakUI();
     // Load todo system
     if (window.loadTodoData) await window.loadTodoData();
 }
+
+async function updateStreakUI() {
+    try {
+        const data = await API.getStreakData();
+        if (!data) return;
+
+        // 1. Streak Counter
+        const counter = document.getElementById('streakCounter');
+        if (counter) {
+            counter.innerHTML = `🔥 ${data.currentStreak} day streak`;
+        }
+
+        // 2. Weekly Progress
+        const label = document.getElementById('weeklyProgressLabel');
+        const bar = document.getElementById('weeklyProgressBar');
+        if (label && bar) {
+            const { completed, total } = data.weeklyProgress;
+            label.innerText = `Week: ${completed}/${total} tasks completed`;
+            const pct = total > 0 ? (completed / total) * 100 : 0;
+            bar.style.width = `${Math.min(pct, 100)}%`;
+        }
+
+        // 3. Mini Calendar
+        const cal = document.getElementById('streakCalendar');
+        if (cal) {
+            cal.innerHTML = data.last7Days.map(d => `
+                <div class="streak-day-square ${d.active ? 'active' : ''}" title="${d.date}"></div>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('Failed to update streak UI:', err);
+    }
+}
+window.updateStreakUI = updateStreakUI;
 
 // Toggle task completion (handles both calendar tasks AND important todo tasks)
 async function toggleTaskComplete(taskId, isCompleted) {
@@ -299,6 +339,7 @@ async function toggleTaskComplete(taskId, isCompleted) {
             await API.updateTask(taskId, updatedTask);
             tasks = await API.getTasks();
             renderAllViews();
+            await updateStreakUI();
             showNotification(isCompleted ? 'Task completed! ✓' : 'Task uncompleted', 'success');
         }
     } catch (error) {

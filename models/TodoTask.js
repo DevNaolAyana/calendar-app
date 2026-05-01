@@ -16,7 +16,8 @@ const todoTaskSchema = new mongoose.Schema({
     endTime:   { type: String, default: null },
     date:      { type: String, default: null }, // YYYY-MM-DD calendar date
 
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    completedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('TodoTask', todoTaskSchema);

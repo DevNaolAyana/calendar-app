@@ -13,6 +13,14 @@ const userSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    currentStreak: {
+        type: Number,
+        default: 0
+    },
+    lastActiveDate: {
+        type: String,
+        default: null
     }
 });
 

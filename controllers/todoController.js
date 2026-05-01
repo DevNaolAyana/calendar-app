@@ -1,6 +1,7 @@
 const TodoGroup = require('../models/TodoGroup');
 const TodoList  = require('../models/TodoList');
 const TodoTask  = require('../models/TodoTask');
+const { updateStreakOnCompletion } = require('./streakController');
 
 // ─── GROUPS ─────────────────────────────────────────────────────────────────
 
@@ -88,12 +89,23 @@ const createTask = async (req, res) => {
 
 const updateTask = async (req, res) => {
     try {
+        const updates = req.body;
+        if (updates.completed === true) {
+            updates.completedAt = new Date();
+        } else if (updates.completed === false) {
+            updates.completedAt = null;
+        }
+
         const task = await TodoTask.findOneAndUpdate(
             { _id: req.params.id, userId: req.userId },
-            req.body,
+            updates,
             { new: true }
         );
         if (!task) return res.status(404).json({ message: 'Task not found' });
+
+        if (updates.completed === true) {
+            await updateStreakOnCompletion(req.userId);
+        }
         res.json(task);
     } catch (e) { res.status(500).json({ message: e.message }); }
 };
