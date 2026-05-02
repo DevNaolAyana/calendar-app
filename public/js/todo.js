@@ -295,6 +295,45 @@ function _fmtT(t24) {
 }
 
 // ─── Render: Due Dates ───────────────────────────────────────────
+function _formatCountdown(dueDateStr) {
+    const now = new Date();
+    const due = new Date(dueDateStr + 'T23:59:59');
+    const diffMs = due - now;
+    
+    if (diffMs < 0) {
+        const overdueDays = Math.ceil(-diffMs / (1000 * 60 * 60 * 24));
+        return `<span style="color: #e74c3c; font-weight: 500;">⚠️ Overdue by ${overdueDays} day${overdueDays !== 1 ? 's' : ''}</span>`;
+    }
+    
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    const remMins = diffMins % 60;
+    const remHours = diffHours % 24;
+    
+    let text = '⏳ ';
+    let color = '';
+    
+    if (diffDays > 7) {
+        text += `${diffDays} days`;
+        color = '#2ecc71';
+    } else if (diffDays >= 1) {
+        text += `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+        if (remHours > 0) text += ` ${remHours} hour${remHours !== 1 ? 's' : ''}`;
+        color = diffDays > 3 ? '#2ecc71' : '#f1c40f';
+    } else if (diffHours >= 1) {
+        text += `${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
+        if (remMins > 0) text += ` ${remMins} minute${remMins !== 1 ? 's' : ''}`;
+        color = '#e67e22';
+    } else {
+        text += `${diffMins} minute${diffMins !== 1 ? 's' : ''}`;
+        color = '#e67e22';
+    }
+    
+    return `<span style="color: ${color}; font-weight: 500;">${text}</span>`;
+}
+
 function renderDueDates() {
     const cont  = document.getElementById('dueDatesList');
     const badge = document.getElementById('dueDatesCount');
@@ -304,7 +343,7 @@ function renderDueDates() {
     for (const g of todoGroups) {
         const groupFirstWord = g.name.split(' ')[0];
         for (const l of (todoListsCache[g._id] || [])) {
-            const tasks = (todoTasksCache[l._id] || []).filter(t => !t.completed);
+            const tasks = (todoTasksCache[l._id] || []).filter(t => !t.completed && t.dueDate);
             tasks.forEach(t => t.groupNameFirst = groupFirstWord);
             all = all.concat(tasks);
         }
@@ -328,12 +367,20 @@ function renderDueDates() {
           <span class="${ov?'overdue-text':''}">${ov?'<i class="fas fa-exclamation-triangle"></i>':'<i class="fas fa-calendar-day"></i>'} ${_fmt(t.dueDate)}</span>
           ${t.duration?`<span> · <i class="fas fa-hourglass-half"></i> ${_esc(t.duration)}</span>`:''}
           <span> · ${_esc(t.groupNameFirst)}</span>
+          <span> · ${_formatCountdown(t.dueDate)}</span>
         </div>
       </div>
     </div>`;
     }).join('');
 }
 window.refreshTodoDueDates = renderDueDates;
+
+// Update countdown every minute
+setInterval(() => {
+    if (document.getElementById('dueDatesList')) {
+        renderDueDates();
+    }
+}, 60000);
 
 // ─── Collapse toggles ────────────────────────────────────────────
 function todoToggleGroup(gid) {
