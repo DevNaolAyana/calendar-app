@@ -97,12 +97,28 @@ function renderTodoGroups() {
     
     let html = '';
     for (const g of todoGroups) {
+        const lists = todoListsCache[g._id] || [];
+        let totalTasksInGroup = 0;
+        let completedTasksInGroup = 0;
+        let completedListsInGroup = 0;
+
+        for (const l of lists) {
+            const tasks = todoTasksCache[l._id] || [];
+            const completed = tasks.filter(t => t.completed).length;
+            totalTasksInGroup += tasks.length;
+            completedTasksInGroup += completed;
+            if (tasks.length > 0 && completed === tasks.length) {
+                completedListsInGroup++;
+            }
+        }
+
         const listsHtml = renderListsHtml(g._id);
-        const taskCount = _groupTaskCount(g._id);
-        
         if ((window.todoSearchQuery || window.todoCategoryFilter !== 'All') && !listsHtml) continue;
         
         const isExpanded = _expandedGroups.has(g._id);
+        const isGroupDone = lists.length > 0 && completedListsInGroup === lists.length;
+        const trophy = isGroupDone ? '<span style="margin-right:5px;" title="All lists completed!">🏆</span>' : '';
+        const groupBadgeText = `${completedListsInGroup}/${lists.length} lists · ${completedTasksInGroup}/${totalTasksInGroup} tasks`;
         
         html += `
     <div class="todo-group" data-group-id="${g._id}">
@@ -113,7 +129,8 @@ function renderTodoGroups() {
           </button>
           <i class="fas fa-folder todo-folder-icon"></i>
           <span class="todo-group-name">${_esc(g.name)}</span>
-          <span class="todo-count-badge">${taskCount}</span>
+          ${trophy}
+          <span class="todo-count-badge">${groupBadgeText}</span>
         </div>
         <div class="todo-hdr-actions">
           <button class="todo-icon-btn todo-btn-add" onclick="openAddListModal('${g._id}')" title="Add List"><i class="fas fa-plus"></i></button>
@@ -137,11 +154,16 @@ function renderListsHtml(gid) {
     let html = '';
     for (const l of lists) {
         const tasks = todoTasksCache[l._id] || [];
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter(t => t.completed).length;
         const tasksHtml = renderTasksHtml(tasks);
         
         if ((window.todoSearchQuery || window.todoCategoryFilter !== 'All') && !tasksHtml) continue;
         
         const isExpanded = _expandedLists.has(l._id);
+        const isListDone = totalTasks > 0 && completedTasks === totalTasks;
+        const checkmark = isListDone ? '<span style="margin-right:5px; color:#2ecc71;" title="All tasks completed!">✓</span>' : '';
+        const listBadgeText = `${completedTasks}/${totalTasks} tasks`;
 
         html += `
     <div class="todo-list-item" data-list-id="${l._id}">
@@ -152,7 +174,8 @@ function renderListsHtml(gid) {
           </button>
           <i class="fas fa-list-ul todo-list-icon"></i>
           <span class="todo-list-name">${_esc(l.name)}</span>
-          <span class="todo-count-badge">${tasks.length}</span>
+          ${checkmark}
+          <span class="todo-count-badge">${listBadgeText}</span>
         </div>
         <div class="todo-hdr-actions">
           <button class="todo-icon-btn todo-btn-add" onclick="openAddTodoTask('${l._id}','${l.groupId}')" title="Add Task"><i class="fas fa-plus"></i></button>
