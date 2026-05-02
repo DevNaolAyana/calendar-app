@@ -35,9 +35,11 @@ const TodoAPI = {
     },
     getGroups:         ()         => TodoAPI.req('/api/todo/groups'),
     createGroup:       (name)     => TodoAPI.req('/api/todo/groups',                  { method: 'POST', body: JSON.stringify({ name }) }),
+    updateGroup:       (id, name) => TodoAPI.req(`/api/todo/groups/${id}`,            { method: 'PUT',  body: JSON.stringify({ name }) }),
     deleteGroup:       (id)       => TodoAPI.req(`/api/todo/groups/${id}`,            { method: 'DELETE' }),
     getListsByGroup:   (gid)      => TodoAPI.req(`/api/todo/groups/${gid}/lists`),
     createList:        (gid, name)=> TodoAPI.req(`/api/todo/groups/${gid}/lists`,     { method: 'POST', body: JSON.stringify({ name }) }),
+    updateList:        (id, name) => TodoAPI.req(`/api/todo/lists/${id}`,             { method: 'PUT',  body: JSON.stringify({ name }) }),
     deleteList:        (id)       => TodoAPI.req(`/api/todo/lists/${id}`,             { method: 'DELETE' }),
     getTasksByList:    (lid)      => TodoAPI.req(`/api/todo/lists/${lid}/tasks`),
     createTask:        (lid, t)   => TodoAPI.req(`/api/todo/lists/${lid}/tasks`,      { method: 'POST', body: JSON.stringify(t) }),
@@ -133,8 +135,9 @@ function renderTodoGroups() {
           <span class="todo-count-badge">${groupBadgeText}</span>
         </div>
         <div class="todo-hdr-actions">
-          <button class="todo-icon-btn todo-btn-add" onclick="openAddListModal('${g._id}')" title="Add List"><i class="fas fa-plus"></i></button>
+          <button class="todo-icon-btn todo-btn-edit" onclick="openEditGroupModal('${g._id}')" title="Edit Group"><i class="fas fa-edit"></i></button>
           <button class="todo-icon-btn todo-btn-del" onclick="deleteGroup('${g._id}')" title="Delete Group"><i class="fas fa-trash"></i></button>
+          <button class="todo-icon-btn todo-btn-add" onclick="openAddListModal('${g._id}')" title="Add List"><i class="fas fa-plus"></i></button>
         </div>
       </div>
       <div class="todo-group-body" id="g-body-${g._id}" style="display: ${isExpanded ? 'block' : 'none'}">
@@ -178,8 +181,9 @@ function renderListsHtml(gid) {
           <span class="todo-count-badge">${listBadgeText}</span>
         </div>
         <div class="todo-hdr-actions">
-          <button class="todo-icon-btn todo-btn-add" onclick="openAddTodoTask('${l._id}','${l.groupId}')" title="Add Task"><i class="fas fa-plus"></i></button>
+          <button class="todo-icon-btn todo-btn-edit" onclick="openEditListModal('${l._id}')" title="Edit List"><i class="fas fa-edit"></i></button>
           <button class="todo-icon-btn todo-btn-del" onclick="deleteTodoList('${l._id}')" title="Delete List"><i class="fas fa-trash"></i></button>
+          <button class="todo-icon-btn todo-btn-add" onclick="openAddTodoTask('${l._id}','${l.groupId}')" title="Add Task"><i class="fas fa-plus"></i></button>
         </div>
       </div>
       <div class="todo-list-body" id="l-body-${l._id}" style="display: ${isExpanded ? 'block' : 'none'}">
@@ -315,8 +319,23 @@ window.todoToggleGroup = todoToggleGroup;
 window.todoToggleList  = todoToggleList;
 
 // ─── CRUD: Groups ────────────────────────────────────────────────
+let _editingGroupId = null;
+
 function openAddGroupModal() {
+    _editingGroupId = null;
+    document.getElementById('groupModalTitle').innerHTML = '<i class="fas fa-folder-plus"></i> New Group';
+    document.getElementById('groupModalSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Create Group';
     document.getElementById('addGroupForm').reset();
+    document.getElementById('addGroupModal').style.display = 'block';
+}
+
+function openEditGroupModal(id) {
+    const g = todoGroups.find(x => x._id === id);
+    if (!g) return;
+    _editingGroupId = id;
+    document.getElementById('groupModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Group';
+    document.getElementById('groupModalSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    document.getElementById('groupNameInput').value = g.name;
     document.getElementById('addGroupModal').style.display = 'block';
 }
 
@@ -324,7 +343,12 @@ async function createGroup(e) {
     e.preventDefault();
     const name = document.getElementById('groupNameInput').value.trim();
     if (!name) return;
-    await TodoAPI.createGroup(name);
+    
+    if (_editingGroupId) {
+        await TodoAPI.updateGroup(_editingGroupId, name);
+    } else {
+        await TodoAPI.createGroup(name);
+    }
     closeTodoModals();
     await loadTodoData();
 }
@@ -335,20 +359,47 @@ async function deleteGroup(id) {
     await loadTodoData();
 }
 window.deleteGroup = deleteGroup;
+window.openEditGroupModal = openEditGroupModal;
 
 // ─── CRUD: Lists ─────────────────────────────────────────────────
+let _editingListId = null;
+
 function openAddListModal(groupId) {
+    _editingListId = null;
     _currentGroupId = groupId;
+    document.getElementById('listModalTitle').innerHTML = '<i class="fas fa-list-ul"></i> New List';
+    document.getElementById('listModalSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Create List';
     document.getElementById('addListForm').reset();
     document.getElementById('addListModal').style.display = 'block';
 }
 window.openAddListModal = openAddListModal;
 
+function openEditListModal(id) {
+    let found = null;
+    for (const gid in todoListsCache) {
+        found = todoListsCache[gid].find(x => x._id === id);
+        if (found) break;
+    }
+    if (!found) return;
+    _editingListId = id;
+    document.getElementById('listModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit List';
+    document.getElementById('listModalSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    document.getElementById('listNameInput').value = found.name;
+    document.getElementById('addListModal').style.display = 'block';
+}
+window.openEditListModal = openEditListModal;
+
 async function createList(e) {
     e.preventDefault();
     const name = document.getElementById('listNameInput').value.trim();
-    if (!name || !_currentGroupId) return;
-    await TodoAPI.createList(_currentGroupId, name);
+    if (!name) return;
+
+    if (_editingListId) {
+        await TodoAPI.updateList(_editingListId, name);
+    } else {
+        if (!_currentGroupId) return;
+        await TodoAPI.createList(_currentGroupId, name);
+    }
     closeTodoModals();
     await loadTodoData();
 }

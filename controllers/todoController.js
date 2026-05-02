@@ -20,6 +20,18 @@ const createGroup = async (req, res) => {
     } catch (e) { res.status(500).json({ message: e.message }); }
 };
 
+const updateGroup = async (req, res) => {
+    try {
+        const group = await TodoGroup.findOneAndUpdate(
+            { _id: req.params.id, userId: req.userId },
+            { name: req.body.name },
+            { new: true }
+        );
+        if (!group) return res.status(404).json({ message: 'Group not found' });
+        res.json(group);
+    } catch (e) { res.status(500).json({ message: e.message }); }
+};
+
 const deleteGroup = async (req, res) => {
     try {
         const { id } = req.params;
@@ -48,6 +60,18 @@ const createList = async (req, res) => {
         const list = new TodoList({ userId: req.userId, groupId: req.params.groupId, name: req.body.name });
         await list.save();
         res.status(201).json(list);
+    } catch (e) { res.status(500).json({ message: e.message }); }
+};
+
+const updateList = async (req, res) => {
+    try {
+        const list = await TodoList.findOneAndUpdate(
+            { _id: req.params.id, userId: req.userId },
+            { name: req.body.name },
+            { new: true }
+        );
+        if (!list) return res.status(404).json({ message: 'List not found' });
+        res.json(list);
     } catch (e) { res.status(500).json({ message: e.message }); }
 };
 
@@ -134,8 +158,8 @@ const getAllDueTasks = async (req, res) => {
 };
 
 module.exports = {
-    getGroups, createGroup, deleteGroup,
-    getListsByGroup, createList, deleteList,
+    getGroups, createGroup, updateGroup, deleteGroup,
+    getListsByGroup, createList, updateList, deleteList,
     getTasksByList, createTask, updateTask, deleteTodoTask,
     getImportantTasks, getAllDueTasks
 };

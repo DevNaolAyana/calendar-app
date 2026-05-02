@@ -8,11 +8,13 @@ router.use(auth);
 // Groups
 router.get('/groups',            ctrl.getGroups);
 router.post('/groups',           ctrl.createGroup);
+router.put('/groups/:id',        ctrl.updateGroup);
 router.delete('/groups/:id',     ctrl.deleteGroup);
 
 // Lists
 router.get('/groups/:groupId/lists',  ctrl.getListsByGroup);
 router.post('/groups/:groupId/lists', ctrl.createList);
+router.put('/lists/:id',              ctrl.updateList);
 router.delete('/lists/:id',           ctrl.deleteList);
 
 // Tasks — special routes BEFORE parameterized :listId routes
