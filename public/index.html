@@ -217,7 +217,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.8 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.9 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -382,6 +382,8 @@
                     <i class="fas fa-hourglass-half"></i>
                     <input type="text" id="todoTaskDuration" placeholder="Duration e.g. 2hr 30min (optional)">
                 </div>
+                <div class="duration-helper">Examples: 2 hr 30 min | 1 hr | 45 min | 30 min</div>
+                <div id="durationError" class="duration-error" style="display:none;">Invalid format. Use examples above.</div>
                 <div class="input-group">
                     <i class="fas fa-tags"></i>
                     <select id="todoTaskCategory">

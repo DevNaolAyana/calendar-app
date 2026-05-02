@@ -84,6 +84,36 @@ function _esc(s) {
     if (!s) return '';
     return s.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;');
 }
+
+function parseDuration(str) {
+    if (!str) return 0;
+    let totalMinutes = 0;
+    str = str.toLowerCase().replace(/,/g, '');
+    
+    // Decimal hr case: "2.5hr"
+    const decimalHrMatch = str.match(/(\d+\.?\d*)\s*(h|hr|hour)s?/);
+    if (decimalHrMatch && str.indexOf('min') === -1 && str.indexOf('m') === -1 && !str.match(/\d+\s*(m|min)/)) {
+        return Math.round(parseFloat(decimalHrMatch[1]) * 60);
+    }
+
+    const hrMatch = str.match(/(\d+)\s*(h|hr|hour)s?/);
+    const minMatch = str.match(/(\d+)\s*(m|min|minute)s?/);
+
+    if (hrMatch) totalMinutes += parseInt(hrMatch[1]) * 60;
+    if (minMatch) totalMinutes += parseInt(minMatch[1]);
+    
+    return totalMinutes;
+}
+
+function formatDuration(totalMinutes) {
+    if (totalMinutes <= 0) return '';
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    let parts = [];
+    if (hrs > 0) parts.push(`${hrs} hr`);
+    if (mins > 0) parts.push(`${mins} min`);
+    return parts.join(' ');
+}
 function _groupTaskCount(gid) {
     return (todoListsCache[gid]||[]).reduce((n,l)=>n+(todoTasksCache[l._id]||[]).length, 0);
 }
@@ -104,6 +134,8 @@ function renderTodoGroups() {
         let completedTasksInGroup = 0;
         let completedListsInGroup = 0;
 
+        let groupTotalMinutes = 0;
+
         for (const l of lists) {
             const tasks = todoTasksCache[l._id] || [];
             const completed = tasks.filter(t => t.completed).length;
@@ -112,6 +144,9 @@ function renderTodoGroups() {
             if (tasks.length > 0 && completed === tasks.length) {
                 completedListsInGroup++;
             }
+            tasks.forEach(t => {
+                if (t.duration) groupTotalMinutes += parseDuration(t.duration);
+            });
         }
 
         const listsHtml = renderListsHtml(g._id);
@@ -122,6 +157,10 @@ function renderTodoGroups() {
         const trophy = isGroupDone ? '<span style="margin-right:5px;" title="All lists completed!">🏆</span>' : '';
         const groupBadgeText = `${completedListsInGroup}/${lists.length} lists · ${completedTasksInGroup}/${totalTasksInGroup} tasks`;
         
+        const groupDurationHtml = groupTotalMinutes > 0 
+            ? `<div class="todo-total-duration">📊 Total: ${formatDuration(groupTotalMinutes)}</div>` 
+            : '';
+
         html += `
     <div class="todo-group" data-group-id="${g._id}">
       <div class="todo-group-header">
@@ -129,10 +168,17 @@ function renderTodoGroups() {
           <button class="todo-collapse-btn" onclick="todoToggleGroup('${g._id}')">
             <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="g-icon-${g._id}"></i>
           </button>
-          <i class="fas fa-folder todo-folder-icon"></i>
-          <span class="todo-group-name">${_esc(g.name)}</span>
-          ${trophy}
-          <span class="todo-count-badge">${groupBadgeText}</span>
+          <div class="todo-group-title-info">
+            <div style="display:flex; align-items:center;">
+              <i class="fas fa-folder todo-folder-icon"></i>
+              <span class="todo-group-name">${_esc(g.name)}</span>
+              ${trophy}
+            </div>
+            <div class="todo-group-meta">
+              <span class="todo-count-badge">${groupBadgeText}</span>
+              ${groupDurationHtml}
+            </div>
+          </div>
         </div>
         <div class="todo-hdr-actions">
           <button class="todo-icon-btn todo-btn-edit" onclick="openEditGroupModal('${g._id}')" title="Edit Group"><i class="fas fa-edit"></i></button>
@@ -168,6 +214,14 @@ function renderListsHtml(gid) {
         const checkmark = isListDone ? '<span style="margin-right:5px; color:#2ecc71;" title="All tasks completed!">✓</span>' : '';
         const listBadgeText = `${completedTasks}/${totalTasks} tasks`;
 
+        let listTotalMinutes = 0;
+        tasks.forEach(t => {
+            if (t.duration) listTotalMinutes += parseDuration(t.duration);
+        });
+        const listDurationHtml = listTotalMinutes > 0 
+            ? `<div class="todo-total-duration">📊 Total: ${formatDuration(listTotalMinutes)}</div>` 
+            : '';
+
         html += `
     <div class="todo-list-item" data-list-id="${l._id}">
       <div class="todo-list-header">
@@ -175,10 +229,17 @@ function renderListsHtml(gid) {
           <button class="todo-collapse-btn" onclick="todoToggleList('${l._id}')">
             <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="l-icon-${l._id}"></i>
           </button>
-          <i class="fas fa-list-ul todo-list-icon"></i>
-          <span class="todo-list-name">${_esc(l.name)}</span>
-          ${checkmark}
-          <span class="todo-count-badge">${listBadgeText}</span>
+          <div class="todo-list-title-info">
+            <div style="display:flex; align-items:center;">
+              <i class="fas fa-list-ul todo-list-icon"></i>
+              <span class="todo-list-name">${_esc(l.name)}</span>
+              ${checkmark}
+            </div>
+            <div class="todo-list-meta">
+              <span class="todo-count-badge">${listBadgeText}</span>
+              ${listDurationHtml}
+            </div>
+          </div>
         </div>
         <div class="todo-hdr-actions">
           <button class="todo-icon-btn todo-btn-edit" onclick="openEditListModal('${l._id}')" title="Edit List"><i class="fas fa-edit"></i></button>
@@ -426,6 +487,7 @@ function openAddTodoTask(listId, groupId) {
     document.getElementById('todoImportantFields').style.display = 'none';
     document.getElementById('deleteTodoFromModalBtn').style.display = 'none';
     document.getElementById('todoTaskModal').style.display = 'block';
+    document.getElementById('durationError').style.display = 'none';
 }
 window.openAddTodoTask = openAddTodoTask;
 
@@ -454,6 +516,7 @@ function openEditTodoTask(taskId) {
     }
     document.getElementById('deleteTodoFromModalBtn').style.display = 'inline-block';
     document.getElementById('todoTaskModal').style.display = 'block';
+    document.getElementById('durationError').style.display = 'none';
 }
 window.openEditTodoTask = openEditTodoTask;
 
@@ -461,11 +524,14 @@ async function saveTodoTask(e) {
     e.preventDefault();
     const isImp = document.getElementById('todoTaskImportant').checked;
     const dueDateVal = document.getElementById('todoTaskDueDate').value;
+    const rawDuration = document.getElementById('todoTaskDuration').value.trim();
+    const normalizedDuration = formatDuration(parseDuration(rawDuration));
+    
     const data = {
         groupId:     _currentTaskGroupId,
         title:       document.getElementById('todoTaskTitle').value.trim(),
         dueDate:     dueDateVal,
-        duration:    document.getElementById('todoTaskDuration').value.trim(),
+        duration:    normalizedDuration,
         category:    document.getElementById('todoTaskCategory').value,
         isImportant: isImp,
         startTime:   isImp ? document.getElementById('todoTaskStartTime').value : null,
@@ -473,6 +539,12 @@ async function saveTodoTask(e) {
         date:        isImp ? dueDateVal : null,
     };
     if (!data.title || !data.dueDate) return;
+    
+    // Final validation before save
+    if (rawDuration && !normalizedDuration) {
+        document.getElementById('durationError').style.display = 'block';
+        return;
+    }
     if (isImp && (!data.startTime || !data.endTime || !data.date)) {
         alert('Important tasks require a Start Time and End Time.');
         return;
@@ -679,4 +751,32 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTodoGroups();
         });
     });
+
+    // Duration auto-formatting & validation
+    const durationInput = document.getElementById('todoTaskDuration');
+    const durationError = document.getElementById('durationError');
+    if (durationInput) {
+        durationInput.addEventListener('blur', (e) => {
+            const val = e.target.value.trim();
+            if (!val) {
+                durationError.style.display = 'none';
+                return;
+            }
+            const mins = parseDuration(val);
+            const formatted = formatDuration(mins);
+            if (formatted) {
+                e.target.value = formatted;
+                durationError.style.display = 'none';
+            } else {
+                durationError.style.display = 'block';
+            }
+        });
+        durationInput.addEventListener('input', (e) => {
+            // Clear error while typing if it looks valid
+            const val = e.target.value.trim();
+            if (!val || parseDuration(val) > 0) {
+                durationError.style.display = 'none';
+            }
+        });
+    }
 });

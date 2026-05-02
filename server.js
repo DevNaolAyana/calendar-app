@@ -17,7 +17,12 @@ app.use(express.static('public'));
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
+    .then(() => {
+        console.log('✅ Connected to MongoDB');
+        // Run migrations
+        const { runDurationMigration } = require('./migrations/durationMigration');
+        runDurationMigration();
+    })
     .catch(err => console.log('❌ MongoDB error:', err));
 
 // Routes
