@@ -163,24 +163,16 @@ function renderTodoGroups() {
 
         html += `
     <div class="todo-group" data-group-id="${g._id}">
-      <div class="todo-group-header">
-        <div class="todo-group-title-row">
-          <button class="todo-collapse-btn" onclick="todoToggleGroup('${g._id}')">
-            <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="g-icon-${g._id}"></i>
-          </button>
-          <div class="todo-group-title-info">
-            <div style="display:flex; align-items:center;">
-              <i class="fas fa-folder todo-folder-icon"></i>
-              <span class="todo-group-name">${_esc(g.name)}</span>
-              ${trophy}
-            </div>
-            <div class="todo-group-meta">
-              <span class="todo-count-badge">${groupBadgeText}</span>
-              ${groupDurationHtml}
-            </div>
-          </div>
-        </div>
-        <div class="todo-hdr-actions">
+      <div class="todo-group-header" style="display: flex; align-items: center; gap: 12px;">
+        <button class="todo-collapse-btn" onclick="todoToggleGroup('${g._id}')">
+          <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="g-icon-${g._id}"></i>
+        </button>
+        <i class="fas fa-folder todo-folder-icon"></i>
+        <span class="todo-group-name" style="flex: 0 1 auto;">${_esc(g.name)}</span>
+        ${trophy}
+        <span class="todo-count-badge">${groupBadgeText}</span>
+        ${groupDurationHtml}
+        <div class="todo-hdr-actions" style="margin-left: auto;">
           <button class="todo-icon-btn todo-btn-edit" onclick="openEditGroupModal('${g._id}')" title="Edit Group"><i class="fas fa-edit"></i></button>
           <button class="todo-icon-btn todo-btn-del" onclick="deleteGroup('${g._id}')" title="Delete Group"><i class="fas fa-trash"></i></button>
           <button class="todo-icon-btn todo-btn-add" onclick="openAddListModal('${g._id}')" title="Add List"><i class="fas fa-plus"></i></button>
@@ -224,24 +216,16 @@ function renderListsHtml(gid) {
 
         html += `
     <div class="todo-list-item" data-list-id="${l._id}">
-      <div class="todo-list-header">
-        <div class="todo-list-title-row">
-          <button class="todo-collapse-btn" onclick="todoToggleList('${l._id}')">
-            <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="l-icon-${l._id}"></i>
-          </button>
-          <div class="todo-list-title-info">
-            <div style="display:flex; align-items:center;">
-              <i class="fas fa-list-ul todo-list-icon"></i>
-              <span class="todo-list-name">${_esc(l.name)}</span>
-              ${checkmark}
-            </div>
-            <div class="todo-list-meta">
-              <span class="todo-count-badge">${listBadgeText}</span>
-              ${listDurationHtml}
-            </div>
-          </div>
-        </div>
-        <div class="todo-hdr-actions">
+      <div class="todo-list-header" style="display: flex; align-items: center; gap: 12px;">
+        <button class="todo-collapse-btn" onclick="todoToggleList('${l._id}')">
+          <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" id="l-icon-${l._id}"></i>
+        </button>
+        <i class="fas fa-list-ul todo-list-icon"></i>
+        <span class="todo-list-name" style="flex: 0 1 auto;">${_esc(l.name)}</span>
+        ${checkmark}
+        <span class="todo-count-badge">${listBadgeText}</span>
+        ${listDurationHtml}
+        <div class="todo-hdr-actions" style="margin-left: auto;">
           <button class="todo-icon-btn todo-btn-edit" onclick="openEditListModal('${l._id}')" title="Edit List"><i class="fas fa-edit"></i></button>
           <button class="todo-icon-btn todo-btn-del" onclick="deleteTodoList('${l._id}')" title="Delete List"><i class="fas fa-trash"></i></button>
           <button class="todo-icon-btn todo-btn-add" onclick="openAddTodoTask('${l._id}','${l.groupId}')" title="Add Task"><i class="fas fa-plus"></i></button>
