@@ -2627,6 +2627,29 @@ body.dark-mode .qnav-link.qnav-active {
         min-height: 44px;    /* meets 44px tap target rule */
         border-radius: 10px;
     }
+
+    /* Streak Display Mobile Fix */
+    .streak-header-info {
+        max-width: 100%;
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .streak-counter {
+        font-size: 12px;
+    }
+
+    .weekly-progress-container {
+        min-width: 100px;
+    }
+
+    .weekly-progress-label {
+        font-size: 10px;
+    }
+
+    .streak-mini-calendar {
+        display: none;
+    }
 }
 
 /* Current Time Indicator - Vertical Progress Bar (v2.4.1) */
