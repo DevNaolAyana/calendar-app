@@ -357,12 +357,19 @@ async function openAnalyticsDashboard() {
             </div>
         `).join('') || '<div style="opacity:0.5; text-align:center;">No category data found</div>';
 
-        // Render Heatmap
+        // Render Heatmap with purple shades
         const heatmap = document.getElementById('studyHeatmap');
+        const colorForCount = (count) => {
+            if (count === 0) return '#ebedf0'; // very light gray
+            if (count <= 2) return '#c3d0fe'; // light purple
+            if (count <= 4) return '#667eea'; // medium purple
+            if (count <= 6) return '#4c6ef5'; // dark purple
+            return '#4c6ef5'; // deepest purple for 7+ tasks
+        };
         heatmap.innerHTML = Object.entries(data.heatmap).map(([date, count]) => {
-            let opacity = 0;
-            if (count > 0) opacity = count >= 5 ? 1 : 0.2 + (count * 0.15);
-            return `<div class="streak-day-square active" style="opacity: ${opacity || 0}" title="${date}: ${count} tasks"></div>`;
+            const bg = colorForCount(count);
+            const opacity = count > 0 ? 1 : 0; // full opacity when colored, else transparent
+            return `<div class="streak-day-square active" style="background-color: ${bg}; opacity: ${opacity}" title="${date}: ${count} tasks"></div>`;
         }).join('');
 
         document.getElementById('analyticsModal').style.display = 'block';
