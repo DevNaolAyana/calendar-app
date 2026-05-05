@@ -360,11 +360,11 @@ async function openAnalyticsDashboard() {
         // Render Heatmap with purple shades
         const heatmap = document.getElementById('studyHeatmap');
         const colorForCount = (count) => {
-            if (count === 0) return '#ebedf0'; // very light gray
-            if (count <= 2) return '#c3d0fe'; // light purple
-            if (count <= 4) return '#667eea'; // medium purple
-            if (count <= 6) return '#4c6ef5'; // dark purple
-            return '#4c6ef5'; // deepest purple for 7+ tasks
+            if (count === 0) return '#e2e8f0'; 
+            if (count <= 2) return '#c3d0fe'; 
+            if (count <= 4) return '#667eea'; 
+            if (count <= 6) return '#4c6ef5'; 
+            return '#2d3748'; // 7+ tasks
         };
         heatmap.innerHTML = Object.entries(data.heatmap).map(([date, count]) => {
             const bg = colorForCount(count);

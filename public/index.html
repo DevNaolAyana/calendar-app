@@ -217,7 +217,7 @@
         </div>
 
         <!-- Version Footer -->
-        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.14 &mdash; Calendar + Todo Productivity</div>
+        <div class="app-version"><i class="fas fa-code-branch"></i> v2.7.15 &mdash; Calendar + Todo Productivity</div>
 
     </div>
 
@@ -506,10 +506,14 @@
                     </div>
 <div class="heatmap-legend">
     <span>Less</span>
-    <div class="legend-item"><div class="streak-day-square" style="background:#e2e8f0;"></div><span>0</span></div>
-    <div class="legend-item"><div class="streak-day-square" style="background:#c3d0fe;"></div><span>1-2</span></div>
-    <div class="legend-item"><div class="streak-day-square" style="background:#667eea;"></div><span>3-4</span></div>
-    <div class="legend-item"><div class="streak-day-square" style="background:#4c6ef5;"></div><span>5-6</span></div>
+    <div class="gradient-container">
+        <div class="gradient-bar"></div>
+        <div class="zone zone-0" data-tooltip="0 tasks"></div>
+        <div class="zone zone-1" data-tooltip="1-2 tasks"></div>
+        <div class="zone zone-2" data-tooltip="3-4 tasks"></div>
+        <div class="zone zone-3" data-tooltip="5-6 tasks"></div>
+        <div class="zone zone-4" data-tooltip="7+ tasks"></div>
+    </div>
     <span>More</span>
 </div>
                 </div>
