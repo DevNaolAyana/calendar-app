@@ -379,8 +379,18 @@ body.dark-mode .category-bar-bg {
     gap: 8px;
     font-size: 12px;
     color: #64748b;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    flex-wrap: wrap;
 }
+
+/* Legend item: square and label */
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 8px;
+}
+
 
 .export-btn {
     width: 100%;
