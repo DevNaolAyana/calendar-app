@@ -85,6 +85,17 @@ function _esc(s) {
     return s.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;');
 }
 
+window.getTodoCountForDate = (dateStr) => {
+    let count = 0;
+    for (const lid in todoTasksCache) {
+        // Count total tasks due on this date (including completed if desired, 
+        // but typically users want to see what is due/pending)
+        // User asked for "count of todo tasks due on that day"
+        count += todoTasksCache[lid].filter(t => t.dueDate === dateStr).length;
+    }
+    return count;
+};
+
 function parseDuration(str) {
     if (!str) return 0;
     let totalMinutes = 0;

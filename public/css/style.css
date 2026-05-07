@@ -810,7 +810,9 @@ body.dark-mode .week-day {
 }
 
 .week-day.today .week-day-header {
+    background: #667eea;
     color: white;
+    border-radius: 5px;
 }
 
 .week-task {
@@ -1566,6 +1568,28 @@ body.dark-mode .modal-content {
 
     .quick-add-task-btn::before {
         content: "⚡ +";
+    }
+
+    .view-header-title-container {
+        flex-wrap: wrap;
+        flex: 1;
+        justify-content: space-between;
+    }
+
+    .view-header-title-container h2 {
+        flex: 1;
+        text-align: left;
+    }
+
+    .view-header-title-container .quick-add-task-btn {
+        margin-left: auto;
+    }
+
+    .view-header-title-container .header-badges {
+        flex-basis: 100%;
+        margin-top: 5px;
+        display: flex;
+        justify-content: flex-start;
     }
 
     .view-header {

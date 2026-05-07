@@ -535,17 +535,16 @@ function renderDayView(date) {
     const dayTitleEl = document.getElementById('dayTitle');
     dayTitleEl.innerText = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    // Inject Badges
+    // Inject Badges (v2.7.18 - Single line for mobile)
     let badgesHtml = `
         <div class="header-badges">
-            <span class="badge-pill">📋 ${totalTasks} task${totalTasks !== 1 ? 's' : ''}</span>
-            <span class="badge-pill">✅ ${completedTasks} completed</span>
+            <span class="badge-pill">📋 ${totalTasks} task${totalTasks !== 1 ? 's' : ''} · ✅ ${completedTasks} completed</span>
         </div>`;
     
-    // Remove existing badges if any and re-append
+    // Remove existing badges if any and re-append to the end of the container
     const existingBadges = dayTitleEl.parentElement.querySelector('.header-badges');
     if (existingBadges) existingBadges.remove();
-    dayTitleEl.insertAdjacentHTML('afterend', badgesHtml);
+    dayTitleEl.parentElement.appendChild(new DOMParser().parseFromString(badgesHtml, 'text/html').body.firstChild);
 
     // Build hour grid background
     let slotsHtml = '';
@@ -706,9 +705,13 @@ function renderWeekView(date) {
         let dayTasks = tasks.filter(t => t.date === dateStr);
         let isToday = dateStr === formatDate(new Date());
 
+        const todoCount = window.getTodoCountForDate ? window.getTodoCountForDate(dateStr) : 0;
+        const todoBadge = todoCount > 0 ? `<div class="badge-pill" style="font-size: 0.7rem; padding: 2px 5px; margin-bottom: 5px;">📋 ${todoCount}</div>` : '';
+
         html += `
             <div class="week-day ${isToday ? 'today' : ''}" onclick="goToDate('${dateStr}')">
                 <div class="week-day-header">${day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                ${todoBadge}
                 ${dayTasks.map(t => `
                     <div class="week-task ${isTaskPast(dateStr, t.startTime) ? 'past' : ''}" onclick="event.stopPropagation(); editTask('${t._id}')">
                         <div style="display: flex; align-items: center; gap: 5px;">
@@ -774,9 +777,13 @@ function renderMonthView(date) {
         let dayTasks = tasks.filter(t => t.date === dateStr);
         let isToday = dateStr === formatDate(new Date());
 
+        const todoCount = window.getTodoCountForDate ? window.getTodoCountForDate(dateStr) : 0;
+        const todoBadge = todoCount > 0 ? `<div class="badge-pill" style="font-size: 0.7rem; padding: 2px 5px; margin-top: 5px; display: inline-block;">📋 ${todoCount}</div>` : '';
+
         html += `
             <div class="month-day ${isToday ? 'today' : ''}" onclick="goToDate('${dateStr}')">
                 <div class="month-day-number">${d}</div>
+                ${todoBadge}
                 ${dayTasks.slice(0, 3).map(t => `
                     <div class="month-task ${isTaskPast(dateStr, t.startTime) ? 'past' : ''}" style="display: flex; align-items: center; gap: 3px;" onclick="event.stopPropagation(); editTask('${t._id}')">
                         <input type="checkbox" class="month-checkbox" data-id="${t._id}" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation()">
