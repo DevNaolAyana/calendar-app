@@ -880,8 +880,24 @@ body.dark-mode .month-day-header {
 }
 
 .month-day.today {
-    background: #667eea20;
+    background: #667eea;
     border: 2px solid #667eea;
+    color: white;
+}
+
+.month-day.today .month-day-number {
+    color: white;
+}
+
+.month-day.today .month-task {
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: white;
+}
+
+.month-day.today .badge-pill {
+    background: white;
+    color: #667eea;
 }
 
 .month-day.other-month {
