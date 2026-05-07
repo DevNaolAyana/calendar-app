@@ -1546,12 +1546,31 @@ body.dark-mode .modal-content {
     }
 
     .view-header h2 {
-        font-size: 14px;
+        font-size: 1.2rem;
+    }
+
+    .view-header .badge-pill {
+        font-size: 0.75rem;
+        padding: 2px 8px;
     }
 
     .view-header button {
         padding: 5px 10px;
-        font-size: 12px;
+        font-size: 0.8rem;
+    }
+
+    .quick-add-task-btn span,
+    .quick-add-task-btn i {
+        display: none;
+    }
+
+    .quick-add-task-btn::before {
+        content: "⚡ +";
+    }
+
+    .view-header {
+        gap: 8px;
+        padding: 8px 0;
     }
 
     /* Day View on Mobile */
