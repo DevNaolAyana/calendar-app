@@ -1935,6 +1935,57 @@ body.dark-mode .due-dates-panel {
     .stats-panel, .due-dates-panel {
         position: relative;
     }
+
+    /* Todo Mobile Optimization v2.7.17 */
+    .todo-group-header, .todo-list-header {
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        gap: 10px;
+    }
+
+    .todo-title-info {
+        flex: 1;
+        order: 1;
+    }
+
+    .todo-hdr-actions {
+        order: 2;
+        gap: 12px;
+        margin-left: 0;
+    }
+
+    .todo-meta-info {
+        flex-basis: 100%;
+        order: 3;
+        margin-left: 0;
+        padding-left: 32px;
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .todo-group-name, .todo-list-name {
+        font-size: 1rem;
+        white-space: normal;
+        word-break: break-word;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .todo-count-badge, .todo-total-duration {
+        font-size: 0.75rem;
+    }
+
+    .todo-icon-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .todo-list-header {
+        padding-left: 16px; /* align with group padding on mobile */
+    }
 }
 
 /* ── Todo Controls (Search & Filters) ───────────────────────── */
@@ -2248,6 +2299,7 @@ body.dark-mode .todo-group {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     padding: 11px 14px;
     background: linear-gradient(135deg, #667eea15, #764ba215);
     border-bottom: 1px solid #e0e0e0;
@@ -2259,14 +2311,22 @@ body.dark-mode .todo-group-header {
     border-color: #2c3e6d;
 }
 
-.todo-group-title-row,
-.todo-list-title-row {
+.todo-title-info {
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1;
     min-width: 0;
 }
+
+.todo-meta-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 15px;
+}
+
+/* These are replaced by .todo-title-info */
 
 .todo-group-name {
     flex: 1;
@@ -2301,6 +2361,7 @@ body.dark-mode .todo-list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     padding: 9px 14px 9px 28px;
     background: #fafafa;
 }
