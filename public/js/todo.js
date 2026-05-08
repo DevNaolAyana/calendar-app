@@ -13,6 +13,7 @@ let _currentGroupId = null; // for add-list modal
 
 window.todoSearchQuery = '';
 window.todoCategoryFilter = 'All';
+let dueDatesViewMode = 'active'; // 'active' or 'history'
 
 // Session persistence for expanded/collapsed states
 const _expandedGroups = new Set(JSON.parse(sessionStorage.getItem('todoExpandedGroups') || '[]'));
@@ -358,40 +359,76 @@ function renderDueDates() {
     const badge = document.getElementById('dueDatesCount');
     if (!cont) return;
 
+    // Update toggle buttons UI
+    const activeBtn = document.getElementById('dueDatesViewActive');
+    const historyBtn = document.getElementById('dueDatesViewHistory');
+    if (activeBtn && historyBtn) {
+        activeBtn.classList.toggle('active', dueDatesViewMode === 'active');
+        historyBtn.classList.toggle('active', dueDatesViewMode === 'history');
+    }
+
     let all = [];
     for (const g of todoGroups) {
         const groupFirstWord = g.name.split(' ')[0];
         for (const l of (todoListsCache[g._id] || [])) {
-            const tasks = (todoTasksCache[l._id] || []).filter(t => !t.completed && t.dueDate);
-            tasks.forEach(t => t.groupNameFirst = groupFirstWord);
-            all = all.concat(tasks);
+            const tasks = (todoTasksCache[l._id] || []);
+            let filtered = [];
+            if (dueDatesViewMode === 'active') {
+                filtered = tasks.filter(t => !t.completed && t.dueDate);
+            } else {
+                filtered = tasks.filter(t => t.completed && t.dueDate);
+            }
+            filtered.forEach(t => t.groupNameFirst = groupFirstWord);
+            all = all.concat(filtered);
         }
     }
-    all.sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+
+    if (dueDatesViewMode === 'active') {
+        all.sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+    } else {
+        // Sort history by completedAt (most recent on top)
+        all.sort((a,b) => {
+            const dateA = new Date(a.completedAt || a.createdAt || 0);
+            const dateB = new Date(b.completedAt || b.createdAt || 0);
+            return dateB - dateA;
+        });
+    }
+
     if (badge) badge.textContent = `${all.length} task${all.length!==1?'s':''}`;
 
     if (!all.length) {
-        cont.innerHTML = `<div class="due-dates-empty"><i class="fas fa-check-double"></i><p>All caught up!</p></div>`;
+        cont.innerHTML = `<div class="due-dates-empty"><i class="fas fa-${dueDatesViewMode === 'active' ? 'check-double' : 'history'}"></i><p>${dueDatesViewMode === 'active' ? 'All caught up!' : 'No history yet.'}</p></div>`;
         return;
     }
     const today = _today();
     cont.innerHTML = all.map(t => {
-        const ov = t.dueDate < today;
+        const ov = dueDatesViewMode === 'active' && t.dueDate < today;
+        const isHistory = dueDatesViewMode === 'history';
+        const historyStyling = isHistory ? ' style="opacity: 0.7;"' : '';
+        const titleClass = isHistory ? ' due-date-title strikethrough' : 'due-date-title';
+        const completionInfo = isHistory ? ` · Completed ${_fmt(t.completedAt || t.createdAt)}` : '';
+        
         return `
-    <div class="due-date-item${ov?' overdue':''}" data-task-id="${t._id}">
-      <input type="checkbox" class="todo-cb" onchange="toggleTodoTask('${t._id}',this.checked)">
+    <div class="due-date-item${ov?' overdue':''}${isHistory?' history':''}" data-task-id="${t._id}"${historyStyling}>
+      <input type="checkbox" class="todo-cb" onchange="toggleTodoTask('${t._id}',this.checked)" ${isHistory?'checked':''}>
       <div class="due-date-info">
-        <div class="due-date-title">${t.isImportant?'<i class="fas fa-star" style="color:#f39c12;font-size:10px;"></i> ':''}${_esc(t.title)}</div>
+        <div class="${titleClass}">${isHistory ? '<i class="fas fa-check-circle" style="color:#2ecc71; font-size:11px; margin-right:4px;"></i> ' : ''}${t.isImportant && !isHistory?'<i class="fas fa-star" style="color:#f39c12;font-size:10px;"></i> ':''}${_esc(t.title)}</div>
         <div class="due-date-meta">
           <span class="${ov?'overdue-text':''}">${ov?'<i class="fas fa-exclamation-triangle"></i>':'<i class="fas fa-calendar-day"></i>'} ${_fmt(t.dueDate)}</span>
           ${t.duration?`<span> · <i class="fas fa-hourglass-half"></i> ${_esc(t.duration)}</span>`:''}
           <span> · ${_esc(t.groupNameFirst)}</span>
-          <span> · ${_formatCountdown(t.dueDate)}</span>
+          ${!isHistory ? `<span> · ${_formatCountdown(t.dueDate)}</span>` : `<span>${completionInfo}</span>`}
         </div>
       </div>
     </div>`;
     }).join('');
 }
+
+function toggleDueDatesView(view) {
+    dueDatesViewMode = view;
+    renderDueDates();
+}
+window.toggleDueDatesView = toggleDueDatesView;
 window.refreshTodoDueDates = renderDueDates;
 
 // Update countdown every minute
@@ -829,4 +866,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // Due Dates View Toggles
+    document.getElementById('dueDatesViewActive')?.addEventListener('click', () => toggleDueDatesView('active'));
+    document.getElementById('dueDatesViewHistory')?.addEventListener('click', () => toggleDueDatesView('history'));
 });
